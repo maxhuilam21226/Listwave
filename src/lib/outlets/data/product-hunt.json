@@ -1,0 +1,27 @@
+{
+  "id": "product-hunt",
+  "name": "Product Hunt",
+  "homepage": "https://www.producthunt.com",
+  "submit_url": "https://www.producthunt.com/posts/new",
+  "traffic": "high",
+  "cost": "free",
+  "requires_login": true,
+  "category": "general",
+  "notes": "Schedule the launch ahead of time. Your first comment and early upvotes matter a lot. Verify field limits — they change.",
+  "steps": [
+    "Sign in and click 'Submit a product'.",
+    "Paste the values below into the matching fields.",
+    "Upload logo + at least 2-3 gallery images.",
+    "Schedule for 12:01am PT on launch day; prepare your first comment."
+  ],
+  "fields": [
+    { "key": "name", "label": "Name", "type": "text", "max": 40, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 60, "required": true, "source": "one_liner" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 260, "required": true, "source": "short_desc" },
+    { "key": "url", "label": "Website link", "type": "url", "required": true, "source": "url" },
+    { "key": "topics", "label": "Topics / tags", "type": "tags", "source": "tags" },
+    { "key": "first_comment", "label": "First comment (maker)", "type": "textarea", "source": "long_desc", "help": "Posted by you as the maker once live." },
+    { "key": "thumbnail", "label": "Thumbnail / logo", "type": "image", "source": "logo_url" },
+    { "key": "gallery", "label": "Gallery images", "type": "image", "source": "screenshot_urls" }
+  ]
+}

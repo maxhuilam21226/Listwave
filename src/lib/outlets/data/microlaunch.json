@@ -1,0 +1,23 @@
+{
+  "id": "microlaunch",
+  "name": "Microlaunch",
+  "homepage": "https://microlaunch.net",
+  "submit_url": "https://microlaunch.net/submit",
+  "traffic": "low",
+  "cost": "free",
+  "requires_login": true,
+  "category": "general",
+  "notes": "Daily launch platform for indie makers. Lower traffic but easy free listing.",
+  "steps": [
+    "Sign in and submit your product.",
+    "Fill name, tagline, URL, description, logo.",
+    "Pick a launch day."
+  ],
+  "fields": [
+    { "key": "name", "label": "Name", "type": "text", "max": 50, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 80, "required": true, "source": "one_liner" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 300, "source": "short_desc" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" }
+  ]
+}

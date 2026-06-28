@@ -1,0 +1,24 @@
+{
+  "id": "devhunt",
+  "name": "DevHunt",
+  "homepage": "https://devhunt.org",
+  "submit_url": "https://devhunt.org/new-tool",
+  "traffic": "medium",
+  "cost": "free",
+  "requires_login": true,
+  "category": "dev-tools",
+  "notes": "Developer-tools focused weekly launch board. Good fit for dev/API products.",
+  "steps": [
+    "Sign in and add a new tool.",
+    "Fill name, tagline, URL, description, logo.",
+    "Submit for the weekly batch."
+  ],
+  "fields": [
+    { "key": "name", "label": "Tool name", "type": "text", "max": 50, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 80, "required": true, "source": "one_liner" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 300, "source": "short_desc" },
+    { "key": "tags", "label": "Tags", "type": "tags", "source": "tags" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" }
+  ]
+}

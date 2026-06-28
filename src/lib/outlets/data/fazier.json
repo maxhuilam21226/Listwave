@@ -1,0 +1,25 @@
+{
+  "id": "fazier",
+  "name": "Fazier",
+  "homepage": "https://fazier.com",
+  "submit_url": "https://fazier.com/submit",
+  "traffic": "medium",
+  "cost": "free",
+  "requires_login": true,
+  "category": "general",
+  "notes": "Product Hunt-style launch board with a weekly leaderboard. Free listing available.",
+  "steps": [
+    "Sign in and submit your product.",
+    "Fill name, tagline, URL, description, media.",
+    "Schedule the launch."
+  ],
+  "fields": [
+    { "key": "name", "label": "Name", "type": "text", "max": 50, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 80, "required": true, "source": "one_liner" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 300, "source": "short_desc" },
+    { "key": "tags", "label": "Categories", "type": "tags", "source": "tags" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" },
+    { "key": "media", "label": "Screenshots", "type": "image", "source": "screenshot_urls" }
+  ]
+}

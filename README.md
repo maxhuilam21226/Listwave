@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 LaunchKit
 
-## Getting Started
+Prep your project's assets once, then launch it across many directories from a
+single cockpit: per-outlet pre-formatted copy (tap-to-copy), an "open the submit
+page" button, and progress tracking. Submission is **assisted, not auto-botted**.
 
-First, run the development server:
+Stack: Next.js 16 (App Router) · Supabase (Postgres + Storage + magic-link auth)
+· Tailwind. Outlets live as version-controlled JSON in
+[`src/lib/outlets/data`](src/lib/outlets/data) — that curated set is the moat.
+
+## One-time setup
+
+1. **Create a Supabase project** at https://supabase.com (free tier).
+2. **Run the schema:** open the SQL Editor and paste all of
+   [`supabase/schema.sql`](supabase/schema.sql), then run it. This creates the
+   `projects` + `submissions` tables, RLS policies, and the `assets` storage bucket.
+3. **Configure env:** copy `.env.local.example` to `.env.local` and fill in:
+   - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+     (Supabase → Project Settings → API)
+   - `NEXT_PUBLIC_SITE_URL` = `http://localhost:3000` for local dev
+4. **Auth redirect:** in Supabase → Authentication → URL Configuration, add
+   `http://localhost:3000/**` to the redirect allowlist.
+
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sign in with a magic link, create a project, then work the cockpit.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it fits together
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Piece | Where |
+|---|---|
+| Domain types | [src/lib/types.ts](src/lib/types.ts) |
+| Outlet knowledge base | [src/lib/outlets/](src/lib/outlets/) |
+| Mapping engine (map + truncate) | [src/lib/mapping.ts](src/lib/mapping.ts) |
+| Data access | [src/lib/data.ts](src/lib/data.ts) |
+| Server actions | [src/app/actions.ts](src/app/actions.ts) |
+| Screen 1 — enter project once | [src/components/ProjectForm.tsx](src/components/ProjectForm.tsx) |
+| Screen 2 — launch cockpit | [src/components/Cockpit.tsx](src/components/Cockpit.tsx) |
+| Screen 3 — per-outlet submit | [src/components/OutletSubmit.tsx](src/components/OutletSubmit.tsx) |
 
-## Learn More
+## ⚠️ Outlet configs need verification
 
-To learn more about Next.js, take a look at the following resources:
+The 14 seeded outlets have field/limit guesses drafted from how each form is
+known to look. **Verify each one against its live submit page before trusting
+it** — see [src/lib/outlets/data/README.md](src/lib/outlets/data/README.md).
+Forms drift; keep the set small and maintained rather than large and stale.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Adding an outlet
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Drop a new `<id>.json` in `src/lib/outlets/data/` matching the `Outlet` type.
+It's picked up automatically — no code change.
 
-## Deploy on Vercel
+## Not built yet (deferred by design)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- ✨ LLM copy-variant generation (optional, cheap, cached)
+- Tier-2 browser-extension auto-fill
+- Stripe billing
+- Tier-3 server-side auto-submit — intentionally avoided (gets products banned)

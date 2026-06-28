@@ -1,0 +1,22 @@
+{
+  "id": "reddit-sideproject",
+  "name": "Reddit — r/SideProject",
+  "homepage": "https://www.reddit.com/r/SideProject/",
+  "submit_url": "https://www.reddit.com/r/SideProject/submit",
+  "traffic": "high",
+  "cost": "free",
+  "requires_login": true,
+  "category": "community",
+  "notes": "Read the subreddit rules first. Self/text posts that tell the story do better than bare links. No overt selling.",
+  "steps": [
+    "Log in and open the submit page for r/SideProject.",
+    "Use a descriptive title (not just the product name).",
+    "Write the body as a short build story; include the link inline.",
+    "Engage with comments."
+  ],
+  "fields": [
+    { "key": "title", "label": "Post title", "type": "text", "max": 300, "required": true, "source": "tagline" },
+    { "key": "body", "label": "Body", "type": "textarea", "source": "long_desc", "help": "Tell the story; mention the URL." },
+    { "key": "url", "label": "Link (if link post)", "type": "url", "source": "url" }
+  ]
+}

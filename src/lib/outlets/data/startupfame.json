@@ -1,0 +1,24 @@
+{
+  "id": "startupfame",
+  "name": "Startup Fame",
+  "homepage": "https://startupfa.me",
+  "submit_url": "https://startupfa.me/submit",
+  "traffic": "medium",
+  "cost": "free",
+  "requires_login": true,
+  "category": "general",
+  "notes": "Launch/directory site offering a dofollow backlink (often gated on embedding their badge). Free tier with a queue.",
+  "steps": [
+    "Sign in and submit your startup.",
+    "Fill name, tagline, URL, description, logo.",
+    "Add their badge to your site if required for the free listing."
+  ],
+  "fields": [
+    { "key": "name", "label": "Name", "type": "text", "max": 50, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 80, "required": true, "source": "one_liner" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 300, "source": "short_desc" },
+    { "key": "tags", "label": "Categories", "type": "tags", "source": "tags" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" }
+  ]
+}

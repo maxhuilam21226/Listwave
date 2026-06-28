@@ -1,0 +1,23 @@
+{
+  "id": "indie-hackers",
+  "name": "Indie Hackers",
+  "homepage": "https://www.indiehackers.com",
+  "submit_url": "https://www.indiehackers.com/products/new",
+  "traffic": "medium",
+  "cost": "free",
+  "requires_login": true,
+  "category": "community",
+  "notes": "Create a Product page, then optionally post a 'I just launched' milestone. Community responds to revenue/build transparency.",
+  "steps": [
+    "Sign in and create a new product.",
+    "Fill name, tagline, URL, description.",
+    "Post a launch milestone to your followers."
+  ],
+  "fields": [
+    { "key": "name", "label": "Product name", "type": "text", "max": 60, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 100, "source": "tagline" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "source": "short_desc" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" }
+  ]
+}

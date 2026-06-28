@@ -1,0 +1,22 @@
+{
+  "id": "hacker-news",
+  "name": "Hacker News (Show HN)",
+  "homepage": "https://news.ycombinator.com",
+  "submit_url": "https://news.ycombinator.com/submit",
+  "traffic": "high",
+  "cost": "free",
+  "requires_login": true,
+  "category": "community",
+  "notes": "Title format: 'Show HN: <Name> – <one-liner>'. No marketing fluff. Be ready to reply to comments fast. Post Tue-Thu mornings ET.",
+  "steps": [
+    "Log in to your HN account.",
+    "Use the title format below and your product URL.",
+    "Optionally add a text comment explaining what it is and why you built it.",
+    "Reply to every comment quickly."
+  ],
+  "fields": [
+    { "key": "title", "label": "Title", "type": "text", "max": 80, "required": true, "template": "Show HN: {{name}} – {{one_liner}}", "help": "HN convention for self-promotion posts." },
+    { "key": "url", "label": "URL", "type": "url", "required": true, "source": "url" },
+    { "key": "text", "label": "Text (optional)", "type": "textarea", "source": "long_desc" }
+  ]
+}

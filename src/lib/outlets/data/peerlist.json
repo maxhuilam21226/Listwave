@@ -1,0 +1,25 @@
+{
+  "id": "peerlist",
+  "name": "Peerlist Launchpad",
+  "homepage": "https://peerlist.io",
+  "submit_url": "https://peerlist.io/launchpad",
+  "traffic": "medium",
+  "cost": "free",
+  "requires_login": true,
+  "category": "general",
+  "notes": "Weekly leaderboard similar to Product Hunt. Strong for dev/maker audience. Verify field limits.",
+  "steps": [
+    "Sign in and create a launch.",
+    "Fill name, tagline, URL, description, media.",
+    "Schedule for the upcoming launch week."
+  ],
+  "fields": [
+    { "key": "name", "label": "Name", "type": "text", "max": 50, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 80, "required": true, "source": "one_liner" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 280, "source": "short_desc" },
+    { "key": "tags", "label": "Categories", "type": "tags", "source": "tags" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" },
+    { "key": "media", "label": "Screenshots", "type": "image", "source": "screenshot_urls" }
+  ]
+}

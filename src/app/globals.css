@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Enable class-based dark mode: `dark:` applies under a `.dark` ancestor. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+/* Semantic color tokens — utilities like bg-card / text-fg / border-border
+   resolve to these, and the .dark block below remaps them for dark mode. */
+@theme {
+  --color-surface: #fafafa;
+  --color-card: #ffffff;
+  --color-border: #e5e5e5;
+  --color-fg: #171717;
+  --color-muted: #6b7280;
+  --color-faint: #9ca3af;
+  --color-track: #f1f1f1;
+  --color-accent: #171717;
+  --color-accent-fg: #ffffff;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-surface: #0b0b0c;
+  --color-card: #18181b;
+  --color-border: #2a2a2e;
+  --color-fg: #ededed;
+  --color-muted: #a1a1aa;
+  --color-faint: #71717a;
+  --color-track: #27272a;
+  --color-accent: #ededed;
+  --color-accent-fg: #18181b;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Form controls follow the theme explicitly (avoids OS-driven contrast bugs). */
+input,
+textarea,
+select {
+  color: var(--color-fg);
+  background-color: var(--color-card);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-faint);
 }

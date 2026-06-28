@@ -1,0 +1,25 @@
+{
+  "id": "betalist",
+  "name": "BetaList",
+  "homepage": "https://betalist.com",
+  "submit_url": "https://betalist.com/submit",
+  "traffic": "high",
+  "cost": "free",
+  "requires_login": true,
+  "category": "early-stage",
+  "notes": "For early-stage / pre-launch startups. Free submission has a long queue; paid skips it. Verify limits.",
+  "steps": [
+    "Sign in and start a submission.",
+    "Fill name, tagline, URL and the longer pitch.",
+    "Upload logo + screenshot.",
+    "Submit and wait for moderation."
+  ],
+  "fields": [
+    { "key": "name", "label": "Startup name", "type": "text", "max": 50, "required": true, "source": "name" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "tagline", "label": "Pitch / tagline", "type": "text", "max": 100, "required": true, "source": "tagline" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 600, "source": "short_desc" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" },
+    { "key": "screenshot", "label": "Screenshot", "type": "image", "source": "screenshot_urls" }
+  ]
+}

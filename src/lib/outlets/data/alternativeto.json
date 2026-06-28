@@ -1,0 +1,23 @@
+{
+  "id": "alternativeto",
+  "name": "AlternativeTo",
+  "homepage": "https://alternativeto.net",
+  "submit_url": "https://alternativeto.net/manage/new/",
+  "traffic": "high",
+  "cost": "free",
+  "requires_login": true,
+  "category": "directory",
+  "notes": "High-DA software directory. List your app as an alternative to popular tools for evergreen SEO traffic.",
+  "steps": [
+    "Sign in and add a new application.",
+    "Fill name, URL, description, tags, license.",
+    "Suggest it as an alternative to relevant popular apps."
+  ],
+  "fields": [
+    { "key": "name", "label": "App name", "type": "text", "max": 60, "required": true, "source": "name" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "source": "short_desc" },
+    { "key": "tags", "label": "Tags / categories", "type": "tags", "source": "tags" },
+    { "key": "license", "label": "Licensing model", "type": "select", "source": "pricing_type" }
+  ]
+}

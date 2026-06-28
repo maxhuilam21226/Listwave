@@ -1,0 +1,24 @@
+{
+  "id": "saashub",
+  "name": "SaaSHub",
+  "homepage": "https://www.saashub.com",
+  "submit_url": "https://www.saashub.com/submit",
+  "traffic": "medium",
+  "cost": "free",
+  "requires_login": true,
+  "category": "directory",
+  "notes": "Software discovery / alternatives directory. Evergreen SEO backlink rather than a launch-day spike.",
+  "steps": [
+    "Sign in and submit a product.",
+    "Fill name, URL, description, tags.",
+    "Add it as an alternative to relevant tools."
+  ],
+  "fields": [
+    { "key": "name", "label": "Name", "type": "text", "max": 60, "required": true, "source": "name" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "tagline", "label": "Short description", "type": "text", "max": 120, "source": "tagline" },
+    { "key": "description", "label": "Description", "type": "textarea", "source": "short_desc" },
+    { "key": "tags", "label": "Tags / categories", "type": "tags", "source": "tags" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" }
+  ]
+}

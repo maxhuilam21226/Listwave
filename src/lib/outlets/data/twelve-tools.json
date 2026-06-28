@@ -1,0 +1,24 @@
+{
+  "id": "twelve-tools",
+  "name": "Twelve Tools",
+  "homepage": "https://twelve.tools",
+  "submit_url": "https://twelve.tools/submit",
+  "traffic": "low",
+  "cost": "free",
+  "requires_login": false,
+  "category": "directory",
+  "notes": "Lightweight tools directory with a fast free submission and a dofollow backlink. Low effort, decent SEO value.",
+  "steps": [
+    "Open the submit form.",
+    "Fill name, tagline, URL, description, logo.",
+    "Submit (often approved within a day)."
+  ],
+  "fields": [
+    { "key": "name", "label": "Name", "type": "text", "max": 50, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 80, "required": true, "source": "one_liner" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 250, "source": "short_desc" },
+    { "key": "category", "label": "Category", "type": "select", "source": "tags" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" }
+  ]
+}

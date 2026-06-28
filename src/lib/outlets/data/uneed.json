@@ -1,0 +1,24 @@
+{
+  "id": "uneed",
+  "name": "Uneed",
+  "homepage": "https://www.uneed.best",
+  "submit_url": "https://www.uneed.best/submit-a-tool",
+  "traffic": "medium",
+  "cost": "free",
+  "requires_login": true,
+  "category": "general",
+  "notes": "Free submission has a queue; paid 'skip the line' options exist. Daily/weekly featured slots.",
+  "steps": [
+    "Sign in and submit a tool.",
+    "Fill name, tagline, URL, description, category, logo.",
+    "Pick a launch date or join the free queue."
+  ],
+  "fields": [
+    { "key": "name", "label": "Tool name", "type": "text", "max": 50, "required": true, "source": "name" },
+    { "key": "tagline", "label": "Tagline", "type": "text", "max": 90, "required": true, "source": "one_liner" },
+    { "key": "url", "label": "Website", "type": "url", "required": true, "source": "url" },
+    { "key": "description", "label": "Description", "type": "textarea", "max": 400, "source": "short_desc" },
+    { "key": "category", "label": "Category", "type": "select", "source": "tags" },
+    { "key": "logo", "label": "Logo", "type": "image", "source": "logo_url" }
+  ]
+}
