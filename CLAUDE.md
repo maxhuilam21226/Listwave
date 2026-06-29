@@ -14,22 +14,31 @@ Next.js 16 (App Router, `src/`, Turbopack) · TypeScript · Tailwind v4 · Supab
 
 ## Architecture (where things live)
 - **Outlets are user-managed DB rows** (`public.outlets`, per-user, RLS), not a
-  static dataset. A new account is auto-seeded from `src/lib/outlets/seed.ts`
-  (generated from repo-root `awesome_saas_directories.csv` via
-  `scratchpad/gen-seed.mjs`; ~41 entries: name/url/description). Seeding happens
-  in `getOutlets()` (`src/lib/data.ts`) when the user has zero outlets.
+  static dataset. Each row has a `project_id`: **null = the per-user MASTER
+  template; set = a copy owned by that one project.** A new project copies the
+  whole master list into its own rows on creation (`saveProject` in `actions.ts`),
+  so edits/removes within a project never touch master or sibling projects (new
+  master additions do NOT retroactively flow into existing projects). `sort_order`
+  drives manual drag-ordering. Data helpers: `getMasterOutlets()` (seeds the
+  master from `src/lib/outlets/seed.ts` — ~41 entries generated from repo-root
+  `awesome_saas_directories.csv` via `scratchpad/gen-seed.mjs` — when empty),
+  `getProjectOutlets(id)`, `getOutletCountsByProject()` (all in `src/lib/data.ts`).
 - `src/lib/outlets/` — `index.ts` loads the hand-curated **guides** (`data/*.json`,
   `OutletGuide` type: real submit URLs + field maps; still UNVERIFIED — check live
   forms). `enrich.ts` overlays a guide onto an outlet BY HOSTNAME (sets
   `guided`/`fields`/`steps`/`submit_url`) and exports `GENERIC_FIELDS` (the
   fallback kit). No phases/DR/categories anymore.
 - `src/lib/mapping.ts` — maps the kit into each field (truncate, `{{key}}`
-  templates). `src/lib/data.ts` — Supabase queries (projects, outlets+seed,
-  submissions). `src/app/actions.ts` — server actions incl. outlet
-  add/edit/remove. `supabase/schema.sql` — DB schema + RLS (submissions.outlet_id
-  is now a uuid FK into `outlets`).
-- Screens: `ProjectForm.tsx` (enter kit once), `Cockpit.tsx` (flat outlet list +
-  search/hide-done + add/edit/remove), `OutletSubmit.tsx` (per-outlet prepare view).
+  templates). `src/app/actions.ts` — server actions incl. outlet
+  add/edit/remove/`reorderOutlets` (a `projectId` arg scopes to a project; omit =
+  master). `supabase/schema.sql` — DB schema + RLS (submissions.outlet_id is a
+  uuid FK into `outlets`; **re-running needs `drop table submissions; drop table
+  outlets;` first** — see note at top of the file).
+- Screens: `ProjectForm.tsx` (enter kit once), `Cockpit.tsx` (project's outlet
+  list: search + Hide completed/skipped + add/edit/remove), `OutletSubmit.tsx`
+  (per-outlet prepare view), `/outlets` → `MasterOutlets.tsx` (manage the master
+  template). Shared `OutletForm.tsx` + `SortableList.tsx` (Manual-drag/A→Z/Z→A,
+  drag handles hidden while filtered) power both lists.
 
 ## Conventions
 - **Colors = semantic tokens only** (`bg-surface`/`bg-card`/`text-fg`/`text-muted`/
@@ -43,6 +52,7 @@ Next.js 16 (App Router, `src/`, Turbopack) · TypeScript · Tailwind v4 · Supab
 
 ## Status & next steps
 See memory `launchkit-build-state` for current status and the ordered next
-steps (name locked to Listwave + first push to the Listwave repo done; open
-decision: description-variants feature; schema migration on live Supabase + full
-dogfood still pending).
+steps. Pushed through `b3c6753` (rebrand + master/project outlet split + drag/
+sort ordering). Pending: apply the schema migration to live Supabase (drop
+submissions + outlets, re-run schema.sql), full dogfood, description-variants
+decision.

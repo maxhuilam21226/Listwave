@@ -44,7 +44,7 @@ export default async function CockpitPage({
           href={`/projects/${project.id}/edit`}
           className="rounded-lg border border-border px-3 py-1.5 text-sm"
         >
-          Edit kit
+          Edit default
         </Link>
       </div>
 

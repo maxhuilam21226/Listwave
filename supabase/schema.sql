@@ -38,6 +38,14 @@ create table if not exists public.projects (
 -- MASTER template (seeded from the bundled list on first use, see
 -- src/lib/data.ts); a non-null project_id marks a copy owned by that one
 -- project. sort_order drives manual drag-ordering within a list.
+--
+-- field_overrides is a per-outlet copy-on-write map of submit-form field key ->
+-- the user's literal text for THIS outlet. A missing key means "inherit the
+-- value computed from the project kit"; once a key is present that field is
+-- frozen and later kit edits no longer flow into it (until reset). If migrating
+-- an older DB without dropping the table, add the column with:
+--     alter table public.outlets
+--       add column if not exists field_overrides jsonb not null default '{}'::jsonb;
 -- ---------------------------------------------------------------------------
 create table if not exists public.outlets (
   id          uuid primary key default gen_random_uuid(),
@@ -47,6 +55,7 @@ create table if not exists public.outlets (
   url         text not null,
   description text not null default '',
   sort_order  double precision not null default 0,
+  field_overrides jsonb not null default '{}'::jsonb,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );

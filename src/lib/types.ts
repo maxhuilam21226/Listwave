@@ -96,6 +96,14 @@ export interface Outlet {
   url: string;
   description: string;
   sort_order: number;
+  /**
+   * Per-outlet copy-on-write field content: maps a submit-form field `key` to
+   * the user's literal text for THIS outlet. A missing key means "inherit the
+   * value computed from the project kit"; a present key is frozen and ignores
+   * later kit edits until reset (the key is removed). Only copy fields land
+   * here — never image/asset fields.
+   */
+  field_overrides: Record<string, string>;
   created_at: string;
   updated_at: string;
 }

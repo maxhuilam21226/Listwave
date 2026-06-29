@@ -125,6 +125,28 @@ export async function deleteOutlet(id: string, projectId?: string) {
   revalidateOutletList(projectId);
 }
 
+/**
+ * Persist a project-outlet's per-field overrides (the whole map). The client
+ * holds the full set of fields, so it sends the complete merged map — keys
+ * present here are frozen literals; removing a key reverts that field to the
+ * value computed from the project kit.
+ */
+export async function saveOutletFieldOverrides(
+  outletId: string,
+  overrides: Record<string, string>,
+  projectId: string,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("outlets")
+    .update({ field_overrides: overrides })
+    .eq("id", outletId);
+  if (error) throw error;
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/outlets/${outletId}`);
+}
+
 /** Persist a manual drag order: sort_order becomes each id's position. */
 export async function reorderOutlets(orderedIds: string[], projectId?: string) {
   const supabase = await createClient();

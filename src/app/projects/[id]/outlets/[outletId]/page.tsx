@@ -53,6 +53,7 @@ export default async function OutletSubmitPage({
           projectId={id}
           outlet={outlet}
           fields={fields}
+          initialOverrides={rawOutlet.field_overrides ?? {}}
           initialStatus={initialStatus}
         />
       </div>

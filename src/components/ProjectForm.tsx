@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saveProject, deleteProject } from "@/app/actions";
+import AIAssist from "@/components/AIAssist";
 import type { PricingType, Project, ProjectInput } from "@/lib/types";
 
 const LIMITS = { one_liner: 60, tagline: 100, short_desc: 240 } as const;
@@ -159,14 +160,24 @@ export default function ProjectForm({ project }: { project?: Project }) {
         onChange={(v) => set("short_desc", v)}
       />
 
-      <Field label="Long description" help="Full pitch for HN/Reddit/Indie Hackers.">
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium">Long description</span>
+          <AIAssist
+            text={form.long_desc}
+            onResult={(v) => set("long_desc", v)}
+          />
+        </div>
+        <span className="block text-xs text-muted">
+          Full pitch for HN/Reddit/Indie Hackers.
+        </span>
         <textarea
           rows={5}
           value={form.long_desc}
           onChange={(e) => set("long_desc", e.target.value)}
-          className={inputCls}
+          className={`${inputCls} mt-1`}
         />
-      </Field>
+      </div>
 
       <Field label="Tags" help="Comma-separated.">
         <input
@@ -322,13 +333,16 @@ function LimitedField({
   const over = value.length > max;
   return (
     <div>
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between gap-2">
         <span className="text-sm font-medium">{label}</span>
-        <span
-          className={`text-xs ${over ? "text-red-600 dark:text-red-400" : "text-faint"}`}
-        >
-          {value.length}/{max}
-        </span>
+        <div className="flex items-center gap-2">
+          <AIAssist text={value} max={max} onResult={onChange} />
+          <span
+            className={`text-xs ${over ? "text-red-600 dark:text-red-400" : "text-faint"}`}
+          >
+            {value.length}/{max}
+          </span>
+        </div>
       </div>
       {help && <span className="block text-xs text-muted">{help}</span>}
       <div className="mt-1">
