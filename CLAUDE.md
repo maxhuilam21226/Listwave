@@ -43,5 +43,6 @@ Next.js 16 (App Router, `src/`, Turbopack) · TypeScript · Tailwind v4 · Supab
 
 ## Status & next steps
 See memory `launchkit-build-state` for current status and the ordered next
-steps (open decision: description-variants feature; nothing committed to git
-yet; full dogfood pending).
+steps (name locked to Listwave + first push to the Listwave repo done; open
+decision: description-variants feature; schema migration on live Supabase + full
+dogfood still pending).
