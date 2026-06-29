@@ -1,4 +1,4 @@
-# 🚀 LaunchKit
+# 🚀 Listwave
 
 Prep your project's assets once, then launch it across many directories from a
 single cockpit: per-outlet pre-formatted copy (tap-to-copy), an "open the submit

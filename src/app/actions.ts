@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { ProjectInput, SubmissionStatus } from "@/lib/types";
+import type { OutletInput, ProjectInput, SubmissionStatus } from "@/lib/types";
 
 /** Create or update a project's launch kit. Redirects to its cockpit. */
 export async function saveProject(input: ProjectInput, id?: string) {
@@ -55,6 +55,46 @@ export async function setSubmissionStatus(
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/outlets/${outletId}`);
+}
+
+// --- Outlet management (user-owned launch directory list) ------------------
+
+/** Add a new outlet to the user's list. */
+export async function addOutlet(input: OutletInput, projectId?: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase
+    .from("outlets")
+    .insert({ ...input, user_id: user.id });
+  if (error) throw error;
+
+  if (projectId) revalidatePath(`/projects/${projectId}`);
+}
+
+/** Edit an existing outlet's name/url/description. */
+export async function updateOutlet(
+  id: string,
+  input: OutletInput,
+  projectId?: string,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("outlets").update(input).eq("id", id);
+  if (error) throw error;
+
+  if (projectId) revalidatePath(`/projects/${projectId}`);
+}
+
+/** Remove an outlet (its submissions cascade away via the FK). */
+export async function deleteOutlet(id: string, projectId?: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("outlets").delete().eq("id", id);
+  if (error) throw error;
+
+  if (projectId) revalidatePath(`/projects/${projectId}`);
 }
 
 export async function deleteProject(id: string) {

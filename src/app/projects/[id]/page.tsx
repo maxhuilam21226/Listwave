@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Cockpit from "@/components/Cockpit";
-import { getProject, getSubmissions } from "@/lib/data";
-import { getCategories, getDirectories } from "@/lib/directories";
+import { getOutlets, getProject, getSubmissions } from "@/lib/data";
+import { enrichOutlets } from "@/lib/outlets/enrich";
 import type { SubmissionStatus } from "@/lib/types";
 
 export default async function CockpitPage({
@@ -14,8 +14,7 @@ export default async function CockpitPage({
   const project = await getProject(id);
   if (!project) notFound();
 
-  const directories = getDirectories();
-  const categories = getCategories();
+  const outlets = enrichOutlets(await getOutlets());
   const submissions = await getSubmissions(id);
   const initialStatuses: Record<string, SubmissionStatus> = {};
   for (const [outletId, sub] of Object.entries(submissions))
@@ -52,8 +51,7 @@ export default async function CockpitPage({
       <div className="mt-8">
         <Cockpit
           projectId={project.id}
-          directories={directories}
-          categories={categories}
+          outlets={outlets}
           initialStatuses={initialStatuses}
         />
       </div>

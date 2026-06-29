@@ -56,7 +56,7 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <h1 className="text-2xl font-bold">🚀 LaunchKit</h1>
+      <h1 className="text-2xl font-bold">🚀 Listwave</h1>
       <p className="mt-1 text-sm text-muted">
         {mode === "signin"
           ? "Sign in to manage your launches."

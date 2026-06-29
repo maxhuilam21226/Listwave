@@ -1,4 +1,4 @@
-// Core domain types for LaunchKit.
+// Core domain types for Listwave.
 
 /** The canonical keys of a project "launch kit" — every outlet field maps to one of these. */
 export type KitFieldKey =
@@ -62,8 +62,12 @@ export interface OutletField {
   help?: string;
 }
 
-/** A curated config for a single launch directory — the product's moat. */
-export interface Outlet {
+/**
+ * A hand-curated submit-form config for a known outlet — the "guided" overlay.
+ * These are matched against a user's outlet BY HOSTNAME to power the rich
+ * tap-to-copy prepare view. They are reference data in the repo, not DB rows.
+ */
+export interface OutletGuide {
   id: string;
   name: string;
   homepage: string;
@@ -77,35 +81,29 @@ export interface Outlet {
   fields: OutletField[];
 }
 
-// --- Directory database (from the Startup-Launch-List CSV, 582 entries) ---
+// --- Outlets (user-managed launch directories, stored in Supabase) ---
 
-export type LaunchPhase = 1 | 2 | 3 | 4;
-
-/** A raw directory entry as parsed from the CSV. */
-export interface Directory {
-  id: string; // slug derived from hostname
+/** A launch outlet the user can add/edit/remove. One row per outlet, per user. */
+export interface Outlet {
+  id: string;
+  user_id: string;
   name: string;
   url: string;
-  domain_rating: number | null;
-  link_type: string | null; // "Dofollow" | "Nofollow" | null
-  pricing: string | null; // "Free" | "Freemium" | "Paid" | null
-  category: string | null;
   description: string;
+  created_at: string;
+  updated_at: string;
 }
 
-/** A directory enriched with strategy metadata + any curated submission overlay. */
-export interface DirectoryEnriched extends Directory {
-  phase: LaunchPhase;
-  isPaid: boolean;
-  isDofollow: boolean;
-  /** True for the curated "best for discovery" subset (Phase 1 is trimmed to ~40;
-      Phases 2–4 are all true). Drives the cockpit's "Recommended only" view. */
-  recommended: boolean;
-  // Optional curated overlay (present for hand-verified outlets, matched by hostname):
+/** Editable subset of an Outlet (what the add/edit form submits). */
+export type OutletInput = Pick<Outlet, "name" | "url" | "description">;
+
+/** An outlet enriched with a curated guide overlay when its hostname matches. */
+export interface OutletEnriched extends Outlet {
+  /** True when a curated field-map guide matched this outlet's hostname. */
+  guided: boolean;
   submit_url?: string;
   fields?: OutletField[];
   steps?: string[];
-  notes?: string;
 }
 
 export type SubmissionStatus = "todo" | "submitted" | "skipped";

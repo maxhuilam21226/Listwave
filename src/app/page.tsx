@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { getProjects } from "@/lib/data";
-import { getDirectories } from "@/lib/directories";
+import { getOutlets, getProjects } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function HomePage() {
   const projects = await getProjects();
-  const totalOutlets = getDirectories().length;
+  const totalOutlets = (await getOutlets()).length;
 
   // Submitted counts per project in one query.
   const supabase = await createClient();
@@ -51,7 +50,7 @@ export default async function HomePage() {
         <ul className="mt-8 grid gap-4 sm:grid-cols-2">
           {projects.map((p) => {
             const done = submittedByProject.get(p.id) ?? 0;
-            const pct = Math.round((done / totalOutlets) * 100);
+            const pct = totalOutlets ? Math.round((done / totalOutlets) * 100) : 0;
             return (
               <li key={p.id}>
                 <Link

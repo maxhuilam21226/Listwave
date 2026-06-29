@@ -1,6 +1,5 @@
 import type {
   KitFieldKey,
-  Outlet,
   OutletField,
   PreparedField,
   Project,
@@ -72,11 +71,6 @@ export function prepareFields(
   project: Project,
 ): PreparedField[] {
   return fields.map((f) => prepareField(f, project));
-}
-
-/** Prepare every field for an outlet, ready for the per-outlet submit view. */
-export function prepareOutlet(outlet: Outlet, project: Project): PreparedField[] {
-  return prepareFields(outlet.fields, project);
 }
 
 /** Image fields hold URLs to assets the user uploads manually, not copy. */

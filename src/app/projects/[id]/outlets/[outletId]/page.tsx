@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import OutletSubmit from "@/components/OutletSubmit";
-import { getProject, getSubmissions } from "@/lib/data";
-import { getDirectory } from "@/lib/directories";
+import { getOutlet, getProject, getSubmissions } from "@/lib/data";
+import { GENERIC_FIELDS, enrichOutlet } from "@/lib/outlets/enrich";
 import { prepareFields } from "@/lib/mapping";
-import { GENERIC_FIELDS, phaseMeta } from "@/lib/strategy";
 
 export default async function OutletSubmitPage({
   params,
@@ -12,18 +11,21 @@ export default async function OutletSubmitPage({
   params: Promise<{ id: string; outletId: string }>;
 }) {
   const { id, outletId } = await params;
-  const project = await getProject(id);
+  const [project, rawOutlet] = await Promise.all([
+    getProject(id),
+    getOutlet(outletId),
+  ]);
   if (!project) notFound();
-  const dir = getDirectory(outletId);
-  if (!dir) notFound();
+  if (!rawOutlet) notFound();
+  const outlet = enrichOutlet(rawOutlet);
 
-  const fields = prepareFields(dir.fields ?? GENERIC_FIELDS, project);
+  const fields = prepareFields(outlet.fields ?? GENERIC_FIELDS, project);
   const submissions = await getSubmissions(id);
   const initialStatus = submissions[outletId]?.status ?? "todo";
 
-  let host = dir.url;
+  let host = outlet.url;
   try {
-    host = new URL(dir.url).hostname;
+    host = new URL(outlet.url).hostname;
   } catch {}
 
   return (
@@ -32,9 +34,9 @@ export default async function OutletSubmitPage({
         ← {project.name}
       </Link>
       <div className="mt-2 flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">{dir.name}</h1>
+        <h1 className="text-2xl font-bold">{outlet.name}</h1>
         <a
-          href={dir.url}
+          href={outlet.url}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-muted hover:underline"
@@ -42,16 +44,15 @@ export default async function OutletSubmitPage({
           {host}
         </a>
       </div>
-      {dir.description && (
-        <p className="mt-1 text-sm text-muted">{dir.description}</p>
+      {outlet.description && (
+        <p className="mt-1 text-sm text-muted">{outlet.description}</p>
       )}
 
       <div className="mt-8">
         <OutletSubmit
           projectId={id}
-          dir={dir}
+          outlet={outlet}
           fields={fields}
-          phase={phaseMeta(dir.phase)}
           initialStatus={initialStatus}
         />
       </div>

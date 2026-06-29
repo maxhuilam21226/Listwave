@@ -2,102 +2,89 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { setSubmissionStatus } from "@/app/actions";
-import { PHASES } from "@/lib/strategy";
-import type {
-  DirectoryEnriched,
-  LaunchPhase,
-  SubmissionStatus,
-} from "@/lib/types";
+import { useRouter } from "next/navigation";
+import { addOutlet, deleteOutlet, setSubmissionStatus, updateOutlet } from "@/app/actions";
+import type { OutletEnriched, OutletInput, SubmissionStatus } from "@/lib/types";
 
 type Statuses = Record<string, SubmissionStatus>;
 
-const DR_OPTIONS = [
-  { label: "Any DR", value: 0 },
-  { label: "DR 80+", value: 80 },
-  { label: "DR 65+", value: 65 },
-  { label: "DR 40+", value: 40 },
-];
-
 export default function Cockpit({
   projectId,
-  directories,
-  categories,
+  outlets,
   initialStatuses,
 }: {
   projectId: string;
-  directories: DirectoryEnriched[];
-  categories: string[];
+  outlets: OutletEnriched[];
   initialStatuses: Statuses;
 }) {
+  const router = useRouter();
   const [statuses, setStatuses] = useState<Statuses>(initialStatuses);
   const [search, setSearch] = useState("");
-  const [phase, setPhase] = useState<LaunchPhase | 0>(0);
-  const [category, setCategory] = useState("");
-  const [minDR, setMinDR] = useState(0);
-  const [freeOnly, setFreeOnly] = useState(false);
-  const [dofollowOnly, setDofollowOnly] = useState(false);
   const [hideDone, setHideDone] = useState(false);
-  const [recommendedOnly, setRecommendedOnly] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const statusOf = (id: string): SubmissionStatus => statuses[id] ?? "todo";
 
-  const submittedTotal = directories.filter(
-    (d) => statusOf(d.id) === "submitted",
+  const submittedTotal = outlets.filter(
+    (o) => statusOf(o.id) === "submitted",
   ).length;
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return directories.filter((d) => {
-      if (recommendedOnly && !d.recommended) return false;
-      if (phase && d.phase !== phase) return false;
-      if (freeOnly && d.isPaid) return false;
-      if (dofollowOnly && !d.isDofollow) return false;
-      if (minDR && (d.domain_rating ?? 0) < minDR) return false;
-      if (category && d.category !== category) return false;
-      if (hideDone && statusOf(d.id) === "submitted") return false;
-      if (q && !d.name.toLowerCase().includes(q)) return false;
+    return outlets.filter((o) => {
+      if (hideDone && statusOf(o.id) === "submitted") return false;
+      if (
+        q &&
+        !o.name.toLowerCase().includes(q) &&
+        !o.description.toLowerCase().includes(q)
+      )
+        return false;
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    directories,
-    search,
-    phase,
-    category,
-    minDR,
-    freeOnly,
-    dofollowOnly,
-    hideDone,
-    recommendedOnly,
-    statuses,
-  ]);
-
-  // Group visible directories by phase.
-  const byPhase = useMemo(() => {
-    const m = new Map<LaunchPhase, DirectoryEnriched[]>();
-    for (const d of visible) {
-      const arr = m.get(d.phase) ?? [];
-      arr.push(d);
-      m.set(d.phase, arr);
-    }
-    return m;
-  }, [visible]);
+  }, [outlets, search, hideDone, statuses]);
 
   function update(id: string, status: SubmissionStatus) {
     setStatuses((s) => ({ ...s, [id]: status }));
     startTransition(() => setSubmissionStatus(projectId, id, status));
   }
 
-  const overallPct = Math.round((submittedTotal / directories.length) * 100);
+  function create(input: OutletInput) {
+    startTransition(async () => {
+      await addOutlet(input, projectId);
+      setAdding(false);
+      router.refresh();
+    });
+  }
+
+  function edit(id: string, input: OutletInput) {
+    startTransition(async () => {
+      await updateOutlet(id, input, projectId);
+      setEditingId(null);
+      router.refresh();
+    });
+  }
+
+  function remove(o: OutletEnriched) {
+    if (!confirm(`Remove “${o.name}” from your outlet list? Its progress is lost.`))
+      return;
+    startTransition(async () => {
+      await deleteOutlet(o.id, projectId);
+      router.refresh();
+    });
+  }
+
+  const total = outlets.length;
+  const overallPct = total ? Math.round((submittedTotal / total) * 100) : 0;
 
   return (
     <div>
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="flex justify-between text-sm">
           <span className="font-medium">
-            {submittedTotal}/{directories.length} submitted
+            {submittedTotal}/{total} submitted
           </span>
           <span className="text-muted">{overallPct}%</span>
         </div>
@@ -106,197 +93,100 @@ export default function Cockpit({
         </div>
       </div>
 
-      <StrategyExplainer />
-
-      {/* Filters */}
-      <div className="mt-4 space-y-3 rounded-xl border border-border bg-card p-4">
-        <div className="flex flex-wrap gap-3">
+      {/* Controls */}
+      <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search outlets…"
+          className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
+        />
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search directories…"
-            className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
+            type="checkbox"
+            checked={hideDone}
+            onChange={(e) => setHideDone(e.target.checked)}
           />
-          <select
-            value={phase}
-            onChange={(e) => setPhase(Number(e.target.value) as LaunchPhase | 0)}
-            className="rounded-lg border border-border px-2 py-1.5 text-sm"
-          >
-            <option value={0}>All phases</option>
-            {PHASES.map((p) => (
-              <option key={p.phase} value={p.phase}>
-                Phase {p.phase} — {p.title}
-              </option>
-            ))}
-          </select>
-          <select
-            value={minDR}
-            onChange={(e) => setMinDR(Number(e.target.value))}
-            className="rounded-lg border border-border px-2 py-1.5 text-sm"
-          >
-            {DR_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="max-w-48 rounded-lg border border-border px-2 py-1.5 text-sm"
-          >
-            <option value="">All categories</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-wrap gap-4 text-sm">
-          <Toggle
-            label="⭐ Recommended only"
-            checked={recommendedOnly}
-            onChange={setRecommendedOnly}
-          />
-          <Toggle label="Free only" checked={freeOnly} onChange={setFreeOnly} />
-          <Toggle
-            label="Dofollow only"
-            checked={dofollowOnly}
-            onChange={setDofollowOnly}
-          />
-          <Toggle label="Hide completed" checked={hideDone} onChange={setHideDone} />
-          <span className="ml-auto text-muted">{visible.length} shown</span>
-        </div>
+          Hide completed
+        </label>
+        <button
+          onClick={() => {
+            setAdding((a) => !a);
+            setEditingId(null);
+          }}
+          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg"
+        >
+          {adding ? "Cancel" : "+ Add outlet"}
+        </button>
       </div>
 
-      {/* Phase sections */}
-      <div className="mt-6 space-y-8">
-        {PHASES.map((p) => {
-          const items = byPhase.get(p.phase) ?? [];
-          if (items.length === 0) return null;
-          const inPhase = directories.filter((d) => d.phase === p.phase);
-          const total = recommendedOnly
-            ? inPhase.filter((d) => d.recommended)
-            : inPhase;
-          const done = total.filter((d) => statusOf(d.id) === "submitted").length;
-          const trimmed =
-            recommendedOnly && total.length < inPhase.length;
-          return (
-            <section key={p.phase}>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-lg font-semibold">
-                  Phase {p.phase} · {p.title}
-                  <span className="ml-2 text-sm font-normal text-muted">
-                    {p.when} · {p.rule}
-                  </span>
-                </h2>
-                <span className="text-sm text-muted">
-                  {done}/{total.length} done
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-muted">
-                {p.blurb}
-                {trimmed && (
-                  <>
-                    {" "}
-                    <span className="text-faint">
-                      Showing the best {total.length} for discovery — turn off
-                      “⭐ Recommended only” to see all {inPhase.length}.
-                    </span>
-                  </>
-                )}
-              </p>
+      {adding && (
+        <OutletForm
+          onSubmit={create}
+          onCancel={() => setAdding(false)}
+          submitLabel="Add outlet"
+        />
+      )}
 
-              <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-                {items.map((d) => (
-                  <Row
-                    key={d.id}
-                    dir={d}
-                    projectId={projectId}
-                    status={statusOf(d.id)}
-                    onStatus={update}
-                  />
-                ))}
-              </ul>
-            </section>
-          );
-        })}
-        {visible.length === 0 && (
-          <p className="rounded-xl border border-border bg-card px-4 py-8 text-center text-sm text-muted">
-            No directories match these filters.
-          </p>
+      <div className="mt-3 flex items-center justify-between text-sm text-muted">
+        <span>
+          {visible.length} of {total} outlets
+        </span>
+      </div>
+
+      <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        {visible.map((o) =>
+          editingId === o.id ? (
+            <li key={o.id} className="p-2">
+              <OutletForm
+                initial={o}
+                onSubmit={(input) => edit(o.id, input)}
+                onCancel={() => setEditingId(null)}
+                submitLabel="Save"
+                embedded
+              />
+            </li>
+          ) : (
+            <Row
+              key={o.id}
+              outlet={o}
+              projectId={projectId}
+              status={statusOf(o.id)}
+              onStatus={update}
+              onEdit={() => {
+                setEditingId(o.id);
+                setAdding(false);
+              }}
+              onRemove={() => remove(o)}
+            />
+          ),
         )}
-      </div>
+        {visible.length === 0 && (
+          <li className="px-4 py-8 text-center text-sm text-muted">
+            {total === 0
+              ? "No outlets yet — add one to get started."
+              : "No outlets match this search."}
+          </li>
+        )}
+      </ul>
     </div>
   );
 }
 
-function StrategyExplainer() {
-  return (
-    <details className="group mt-4 rounded-xl border border-border bg-card p-4 text-sm">
-      <summary className="flex cursor-pointer items-center justify-between font-medium">
-        <span>ℹ️ How this launch plan works</span>
-        <span className="text-xs text-muted group-open:hidden">Show</span>
-        <span className="hidden text-xs text-muted group-open:inline">Hide</span>
-      </summary>
-
-      <div className="mt-3 space-y-3 text-muted">
-        <p>
-          Don&apos;t blast every site at once. This plan (from the open-source
-          Startup Launch List) sequences your submissions so your backlink
-          profile grows naturally and you spend effort where it pays off.
-          Directories are sorted into 4 phases by their authority and cost — work
-          them top to bottom.
-        </p>
-
-        <ol className="space-y-2">
-          {PHASES.map((p) => (
-            <li key={p.phase} className="text-fg">
-              <span className="font-medium">
-                Phase {p.phase} · {p.title}
-              </span>{" "}
-              <span className="text-xs text-muted">
-                ({p.when} · {p.rule})
-              </span>
-              <p className="text-muted">{p.blurb}</p>
-            </li>
-          ))}
-        </ol>
-
-        <div className="rounded-lg bg-track p-3 text-xs">
-          <p className="font-medium text-fg">Quick glossary</p>
-          <ul className="mt-1 space-y-1">
-            <li>
-              <strong>DR (Domain Rating)</strong> — a 0–100 estimate of a site&apos;s
-              SEO authority. Higher = a more valuable backlink.
-            </li>
-            <li>
-              <strong>Dofollow</strong> — the link passes SEO value to your site.{" "}
-              <strong>Nofollow</strong> — it doesn&apos;t, but still drives referral
-              traffic. Google expects a natural mix of both.
-            </li>
-            <li>
-              <strong>Free / Paid</strong> — whether listing costs money. Phase 1
-              prioritizes high-authority <em>free</em> links first.
-            </li>
-          </ul>
-        </div>
-      </div>
-    </details>
-  );
-}
-
 function Row({
-  dir,
+  outlet,
   projectId,
   status,
   onStatus,
+  onEdit,
+  onRemove,
 }: {
-  dir: DirectoryEnriched;
+  outlet: OutletEnriched;
   projectId: string;
   status: SubmissionStatus;
   onStatus: (id: string, s: SubmissionStatus) => void;
+  onEdit: () => void;
+  onRemove: () => void;
 }) {
   return (
     <li className="flex items-center gap-3 px-4 py-2.5">
@@ -304,32 +194,22 @@ function Row({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href={`/projects/${projectId}/outlets/${dir.id}`}
+            href={`/projects/${projectId}/outlets/${outlet.id}`}
             className="truncate font-medium hover:underline"
           >
-            {dir.name}
+            {outlet.name}
           </Link>
-          {dir.phase === 1 && dir.recommended && (
-            <Badge tone="amber">⭐ Pick</Badge>
-          )}
-          {dir.domain_rating != null && <DRBadge dr={dir.domain_rating} />}
-          <LinkBadge dofollow={dir.isDofollow} type={dir.link_type} />
-          {dir.isPaid ? (
-            <Badge tone="amber">💲 Paid</Badge>
-          ) : dir.pricing ? (
-            <Badge tone="blue">{dir.pricing}</Badge>
-          ) : null}
-          {dir.fields && <Badge tone="green">✓ guided</Badge>}
+          {outlet.guided && <Badge tone="green">✓ guided</Badge>}
         </div>
-        {dir.category && (
-          <p className="truncate text-xs text-faint">{dir.category}</p>
+        {outlet.description && (
+          <p className="truncate text-xs text-faint">{outlet.description}</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <StatusButton
           active={status === "submitted"}
           onClick={() =>
-            onStatus(dir.id, status === "submitted" ? "todo" : "submitted")
+            onStatus(outlet.id, status === "submitted" ? "todo" : "submitted")
           }
           title="Mark submitted"
         >
@@ -337,15 +217,19 @@ function Row({
         </StatusButton>
         <StatusButton
           active={status === "skipped"}
-          onClick={() =>
-            onStatus(dir.id, status === "skipped" ? "todo" : "skipped")
-          }
+          onClick={() => onStatus(outlet.id, status === "skipped" ? "todo" : "skipped")}
           title="Skip"
         >
           ⏭
         </StatusButton>
+        <IconButton onClick={onEdit} title="Edit outlet">
+          ✎
+        </IconButton>
+        <IconButton onClick={onRemove} title="Remove outlet">
+          🗑
+        </IconButton>
         <Link
-          href={`/projects/${projectId}/outlets/${dir.id}`}
+          href={`/projects/${projectId}/outlets/${outlet.id}`}
           className="ml-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg"
         >
           Prepare →
@@ -355,24 +239,98 @@ function Row({
   );
 }
 
-function Toggle({
-  label,
-  checked,
-  onChange,
+function OutletForm({
+  initial,
+  onSubmit,
+  onCancel,
+  submitLabel,
+  embedded,
 }: {
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
+  initial?: { name: string; url: string; description: string };
+  onSubmit: (input: OutletInput) => void;
+  onCancel: () => void;
+  submitLabel: string;
+  embedded?: boolean;
+}) {
+  const [name, setName] = useState(initial?.name ?? "");
+  const [url, setUrl] = useState(initial?.url ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+
+  const canSubmit = name.trim() !== "" && url.trim() !== "";
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    onSubmit({ name: name.trim(), url: url.trim(), description: description.trim() });
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className={
+        embedded
+          ? "space-y-2 rounded-lg border border-border bg-surface p-3"
+          : "mt-3 space-y-2 rounded-xl border border-border bg-card p-4"
+      }
+    >
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Outlet name"
+          className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
+        />
+        <input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://…"
+          type="url"
+          className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
+        />
+      </div>
+      <input
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Short description (optional)"
+        className="w-full rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
+      />
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg disabled:opacity-50"
+        >
+          {submitLabel}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg border border-border px-3 py-1.5 text-sm"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function IconButton({
+  onClick,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
-    </label>
+    <button
+      onClick={onClick}
+      title={title}
+      className="h-7 w-7 rounded-lg border border-border text-sm text-muted hover:border-faint"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -415,33 +373,15 @@ function StatusIcon({ status }: { status: SubmissionStatus }) {
   );
 }
 
-function DRBadge({ dr }: { dr: number }) {
-  const tone = dr >= 80 ? "blue" : dr >= 65 ? "green" : dr >= 40 ? "gray" : "gray";
-  return <Badge tone={tone}>DR {dr}</Badge>;
-}
-
-function LinkBadge({
-  dofollow,
-  type,
-}: {
-  dofollow: boolean;
-  type: string | null;
-}) {
-  if (!type) return null;
-  return <Badge tone={dofollow ? "green" : "gray"}>{type}</Badge>;
-}
-
 function Badge({
   children,
   tone,
 }: {
   children: React.ReactNode;
-  tone: "green" | "amber" | "blue" | "gray";
+  tone: "green" | "gray";
 }) {
   const tones = {
     green: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-    amber: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-    blue: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
     gray: "bg-track text-muted",
   };
   return (

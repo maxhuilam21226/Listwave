@@ -4,23 +4,20 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { setSubmissionStatus } from "@/app/actions";
 import type {
-  DirectoryEnriched,
+  OutletEnriched,
   PreparedField,
   SubmissionStatus,
 } from "@/lib/types";
-import type { PhaseMeta } from "@/lib/strategy";
 
 export default function OutletSubmit({
   projectId,
-  dir,
+  outlet,
   fields,
-  phase,
   initialStatus,
 }: {
   projectId: string;
-  dir: DirectoryEnriched;
+  outlet: OutletEnriched;
   fields: PreparedField[];
-  phase: PhaseMeta;
   initialStatus: SubmissionStatus;
 }) {
   const router = useRouter();
@@ -30,8 +27,8 @@ export default function OutletSubmit({
 
   const copyFields = fields.filter((f) => f.type !== "image");
   const imageFields = fields.filter((f) => f.type === "image");
-  const submitUrl = dir.submit_url ?? dir.url;
-  const guided = Boolean(dir.fields);
+  const submitUrl = outlet.submit_url ?? outlet.url;
+  const guided = outlet.guided;
 
   async function copy(text: string, key: string) {
     await navigator.clipboard.writeText(text);
@@ -47,38 +44,13 @@ export default function OutletSubmit({
   function mark(next: SubmissionStatus) {
     setStatus(next);
     startTransition(() => {
-      setSubmissionStatus(projectId, dir.id, next);
+      setSubmissionStatus(projectId, outlet.id, next);
       router.refresh();
     });
   }
 
   return (
     <div className="space-y-6">
-      {/* Strategy context */}
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="rounded bg-track px-1.5 py-0.5 font-medium text-muted">
-          Phase {phase.phase} · {phase.title} ({phase.when})
-        </span>
-        {dir.domain_rating != null && (
-          <span className="rounded bg-track px-1.5 py-0.5 font-medium text-muted">
-            DR {dir.domain_rating}
-          </span>
-        )}
-        {dir.link_type && (
-          <span className="rounded bg-track px-1.5 py-0.5 font-medium text-muted">
-            {dir.link_type}
-          </span>
-        )}
-        <span className="rounded bg-track px-1.5 py-0.5 font-medium text-muted">
-          {dir.isPaid ? "Paid" : dir.pricing || "Free"}
-        </span>
-        {dir.category && (
-          <span className="rounded bg-track px-1.5 py-0.5 font-medium text-muted">
-            {dir.category}
-          </span>
-        )}
-      </div>
-
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
         <a
           href={submitUrl}
@@ -109,9 +81,9 @@ export default function OutletSubmit({
         </p>
       )}
 
-      {dir.steps && dir.steps.length > 0 && (
+      {outlet.steps && outlet.steps.length > 0 && (
         <ol className="list-decimal space-y-1 rounded-xl border border-border bg-card p-4 pl-8 text-sm text-muted">
-          {dir.steps.map((s, i) => (
+          {outlet.steps.map((s, i) => (
             <li key={i}>{s}</li>
           ))}
         </ol>

@@ -1,8 +1,10 @@
-# Outlet knowledge base
+# Outlet guide knowledge base
 
-Each `*.json` here is one launch directory, matching the `Outlet` type in
-`src/lib/types.ts`. This curated, maintained set **is the product's moat** —
-there is no downloadable dataset for it.
+Each `*.json` here is one curated **guide** (the `OutletGuide` type in
+`src/lib/types.ts`): a hand-mapped submit form for a known outlet. Guides are
+matched against the user's outlets BY HOSTNAME (`homepage`) to power the rich
+tap-to-copy "guided" prepare view. They are reference data, not the outlet list
+itself (outlets live in Supabase and are user-managed).
 
 ## ⚠️ These are SEED configs — verify before trusting
 
@@ -14,10 +16,11 @@ to look, but forms change constantly. Before you rely on an outlet:
 3. Confirm `requires_login`, `cost` (free vs paid), and any badge/backlink
    requirement noted in `notes`.
 
-## Adding an outlet
+## Adding a guide
 
 Drop a new `<id>.json` file in this folder. It's picked up automatically
-(`getOutlets()` reads the directory). No code change needed.
+(`getGuides()` reads the directory) and applied to any outlet whose hostname
+matches its `homepage`. No code change needed.
 
 ## Field `source` values
 

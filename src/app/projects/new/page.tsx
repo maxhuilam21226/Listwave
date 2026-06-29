@@ -9,7 +9,7 @@ export default function NewProjectPage() {
       </Link>
       <h1 className="mt-2 text-2xl font-bold">New project</h1>
       <p className="mt-1 text-sm text-muted">
-        Enter your assets once — LaunchKit reuses them for every outlet.
+        Enter your assets once — Listwave reuses them for every outlet.
       </p>
       <div className="mt-8">
         <ProjectForm />
