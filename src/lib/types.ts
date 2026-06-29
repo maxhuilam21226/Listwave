@@ -83,13 +83,19 @@ export interface OutletGuide {
 
 // --- Outlets (user-managed launch directories, stored in Supabase) ---
 
-/** A launch outlet the user can add/edit/remove. One row per outlet, per user. */
+/**
+ * A launch outlet the user can add/edit/remove. `project_id` is null for rows
+ * in the user's MASTER template list, or set when the row is a project's own
+ * copy. `sort_order` drives manual (drag) ordering within a list.
+ */
 export interface Outlet {
   id: string;
   user_id: string;
+  project_id: string | null;
   name: string;
   url: string;
   description: string;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }

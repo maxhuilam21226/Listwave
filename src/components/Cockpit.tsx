@@ -3,8 +3,16 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { addOutlet, deleteOutlet, setSubmissionStatus, updateOutlet } from "@/app/actions";
+import {
+  addOutlet,
+  deleteOutlet,
+  reorderOutlets,
+  setSubmissionStatus,
+  updateOutlet,
+} from "@/app/actions";
 import type { OutletEnriched, OutletInput, SubmissionStatus } from "@/lib/types";
+import OutletForm from "@/components/OutletForm";
+import SortableList from "@/components/SortableList";
 
 type Statuses = Record<string, SubmissionStatus>;
 
@@ -20,7 +28,7 @@ export default function Cockpit({
   const router = useRouter();
   const [statuses, setStatuses] = useState<Statuses>(initialStatuses);
   const [search, setSearch] = useState("");
-  const [hideDone, setHideDone] = useState(false);
+  const [hideCompleted, setHideCompleted] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -34,7 +42,8 @@ export default function Cockpit({
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return outlets.filter((o) => {
-      if (hideDone && statusOf(o.id) === "submitted") return false;
+      // "Hide completed" hides both submitted and skipped — anything done with.
+      if (hideCompleted && statusOf(o.id) !== "todo") return false;
       if (
         q &&
         !o.name.toLowerCase().includes(q) &&
@@ -44,7 +53,10 @@ export default function Cockpit({
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outlets, search, hideDone, statuses]);
+  }, [outlets, search, hideCompleted, statuses]);
+
+  // Reordering only makes sense over the full list, not a filtered subset.
+  const canReorder = search.trim() === "" && !hideCompleted;
 
   function update(id: string, status: SubmissionStatus) {
     setStatuses((s) => ({ ...s, [id]: status }));
@@ -68,10 +80,17 @@ export default function Cockpit({
   }
 
   function remove(o: OutletEnriched) {
-    if (!confirm(`Remove “${o.name}” from your outlet list? Its progress is lost.`))
+    if (!confirm(`Remove “${o.name}” from this project? Its progress is lost.`))
       return;
     startTransition(async () => {
       await deleteOutlet(o.id, projectId);
+      router.refresh();
+    });
+  }
+
+  function reorder(orderedIds: string[]) {
+    startTransition(async () => {
+      await reorderOutlets(orderedIds, projectId);
       router.refresh();
     });
   }
@@ -104,10 +123,10 @@ export default function Cockpit({
         <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
             type="checkbox"
-            checked={hideDone}
-            onChange={(e) => setHideDone(e.target.checked)}
+            checked={hideCompleted}
+            onChange={(e) => setHideCompleted(e.target.checked)}
           />
-          Hide completed
+          Hide completed/skipped
         </label>
         <button
           onClick={() => {
@@ -128,16 +147,21 @@ export default function Cockpit({
         />
       )}
 
-      <div className="mt-3 flex items-center justify-between text-sm text-muted">
-        <span>
-          {visible.length} of {total} outlets
-        </span>
-      </div>
-
-      <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-        {visible.map((o) =>
+      <SortableList
+        items={visible}
+        onReorder={reorder}
+        canReorder={canReorder}
+        headerLeft={`${visible.length} of ${total} outlets`}
+        empty={
+          <li className="px-4 py-8 text-center text-sm text-muted">
+            {total === 0
+              ? "No outlets yet — add one to get started."
+              : "No outlets match this search."}
+          </li>
+        }
+        renderRow={(o, dragHandle) =>
           editingId === o.id ? (
-            <li key={o.id} className="p-2">
+            <div className="p-2">
               <OutletForm
                 initial={o}
                 onSubmit={(input) => edit(o.id, input)}
@@ -145,13 +169,13 @@ export default function Cockpit({
                 submitLabel="Save"
                 embedded
               />
-            </li>
+            </div>
           ) : (
             <Row
-              key={o.id}
               outlet={o}
               projectId={projectId}
               status={statusOf(o.id)}
+              dragHandle={dragHandle}
               onStatus={update}
               onEdit={() => {
                 setEditingId(o.id);
@@ -159,16 +183,9 @@ export default function Cockpit({
               }}
               onRemove={() => remove(o)}
             />
-          ),
-        )}
-        {visible.length === 0 && (
-          <li className="px-4 py-8 text-center text-sm text-muted">
-            {total === 0
-              ? "No outlets yet — add one to get started."
-              : "No outlets match this search."}
-          </li>
-        )}
-      </ul>
+          )
+        }
+      />
     </div>
   );
 }
@@ -177,6 +194,7 @@ function Row({
   outlet,
   projectId,
   status,
+  dragHandle,
   onStatus,
   onEdit,
   onRemove,
@@ -184,12 +202,14 @@ function Row({
   outlet: OutletEnriched;
   projectId: string;
   status: SubmissionStatus;
+  dragHandle: React.ReactNode;
   onStatus: (id: string, s: SubmissionStatus) => void;
   onEdit: () => void;
   onRemove: () => void;
 }) {
   return (
-    <li className="flex items-center gap-3 px-4 py-2.5">
+    <div className="flex items-center gap-2 px-4 py-2.5">
+      {dragHandle}
       <StatusIcon status={status} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -235,82 +255,7 @@ function Row({
           Prepare →
         </Link>
       </div>
-    </li>
-  );
-}
-
-function OutletForm({
-  initial,
-  onSubmit,
-  onCancel,
-  submitLabel,
-  embedded,
-}: {
-  initial?: { name: string; url: string; description: string };
-  onSubmit: (input: OutletInput) => void;
-  onCancel: () => void;
-  submitLabel: string;
-  embedded?: boolean;
-}) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [url, setUrl] = useState(initial?.url ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
-
-  const canSubmit = name.trim() !== "" && url.trim() !== "";
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!canSubmit) return;
-    onSubmit({ name: name.trim(), url: url.trim(), description: description.trim() });
-  }
-
-  return (
-    <form
-      onSubmit={submit}
-      className={
-        embedded
-          ? "space-y-2 rounded-lg border border-border bg-surface p-3"
-          : "mt-3 space-y-2 rounded-xl border border-border bg-card p-4"
-      }
-    >
-      <div className="flex flex-wrap gap-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Outlet name"
-          className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
-        />
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://…"
-          type="url"
-          className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
-        />
-      </div>
-      <input
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Short description (optional)"
-        className="w-full rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
-      />
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg disabled:opacity-50"
-        >
-          {submitLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
+    </div>
   );
 }
 

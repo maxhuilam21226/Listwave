@@ -2,10 +2,14 @@
 -- Curated submit-form *guides* live as version-controlled JSON in
 -- src/lib/outlets/data and are matched to outlets by hostname at runtime.
 --
--- MIGRATION NOTE: submissions.outlet_id changed from a text slug to a uuid FK
--- into the new `outlets` table. If you have an existing DB from before this
--- change, drop the old submissions table first (it holds incompatible text ids):
+-- MIGRATION NOTE: outlets are now split into a per-user MASTER template
+-- (project_id is null) and per-PROJECT copies (project_id set). A new project
+-- inherits a copy of the master list; editing/removing within a project never
+-- touches the master or other projects. submissions.outlet_id is a uuid FK into
+-- `outlets`. If you have an existing DB from before these changes, drop the old
+-- tables first (they hold an incompatible shape):
 --     drop table if exists public.submissions;
+--     drop table if exists public.outlets;
 -- then run this file. No production data exists yet, so this is safe.
 
 -- ---------------------------------------------------------------------------
@@ -30,20 +34,25 @@ create table if not exists public.projects (
 );
 
 -- ---------------------------------------------------------------------------
--- outlets: the user's editable list of launch directories (add/edit/remove).
--- Seeded from the bundled starter list on first use (see src/lib/data.ts).
+-- outlets: editable launch directories. project_id is null for the user's
+-- MASTER template (seeded from the bundled list on first use, see
+-- src/lib/data.ts); a non-null project_id marks a copy owned by that one
+-- project. sort_order drives manual drag-ordering within a list.
 -- ---------------------------------------------------------------------------
 create table if not exists public.outlets (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users (id) on delete cascade,
+  project_id  uuid references public.projects (id) on delete cascade,
   name        text not null,
   url         text not null,
   description text not null default '',
+  sort_order  double precision not null default 0,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 
-create index if not exists outlets_user_idx on public.outlets (user_id);
+create index if not exists outlets_user_project_idx
+  on public.outlets (user_id, project_id);
 
 -- ---------------------------------------------------------------------------
 -- submissions: progress for one project at one outlet.

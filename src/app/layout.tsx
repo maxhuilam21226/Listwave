@@ -45,6 +45,14 @@ export default async function RootLayout({
               🚀 Listwave
             </Link>
             <div className="flex items-center gap-2">
+              {user && (
+                <Link
+                  href="/outlets"
+                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-muted hover:text-fg"
+                >
+                  Outlets
+                </Link>
+              )}
               <ThemeToggle />
               {user && (
                 <form action="/auth/signout" method="post">

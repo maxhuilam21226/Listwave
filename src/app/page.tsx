@@ -1,10 +1,14 @@
 import Link from "next/link";
-import { getOutlets, getProjects } from "@/lib/data";
+import { getMasterOutlets, getOutletCountsByProject, getProjects } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function HomePage() {
-  const projects = await getProjects();
-  const totalOutlets = (await getOutlets()).length;
+  const [projects, masterOutlets, outletsByProject] = await Promise.all([
+    getProjects(),
+    getMasterOutlets(),
+    getOutletCountsByProject(),
+  ]);
+  const masterCount = masterOutlets.length;
 
   // Submitted counts per project in one query.
   const supabase = await createClient();
@@ -25,15 +29,24 @@ export default async function HomePage() {
         <div>
           <h1 className="text-2xl font-bold">Your projects</h1>
           <p className="mt-1 text-sm text-muted">
-            Enter a project once, then launch it across {totalOutlets} outlets.
+            Enter a project once, then launch it across your {masterCount}-outlet
+            list.
           </p>
         </div>
-        <Link
-          href="/projects/new"
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg"
-        >
-          New project
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/outlets"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:border-faint"
+          >
+            Manage outlets
+          </Link>
+          <Link
+            href="/projects/new"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg"
+          >
+            New project
+          </Link>
+        </div>
       </div>
 
       {projects.length === 0 ? (
@@ -50,7 +63,10 @@ export default async function HomePage() {
         <ul className="mt-8 grid gap-4 sm:grid-cols-2">
           {projects.map((p) => {
             const done = submittedByProject.get(p.id) ?? 0;
-            const pct = totalOutlets ? Math.round((done / totalOutlets) * 100) : 0;
+            const projectTotal = outletsByProject.get(p.id) ?? 0;
+            const pct = projectTotal
+              ? Math.round((done / projectTotal) * 100)
+              : 0;
             return (
               <li key={p.id}>
                 <Link
@@ -76,7 +92,7 @@ export default async function HomePage() {
                   <div className="mt-4">
                     <div className="flex justify-between text-xs text-muted">
                       <span>
-                        {done}/{totalOutlets} submitted
+                        {done}/{projectTotal} submitted
                       </span>
                       <span>{pct}%</span>
                     </div>
