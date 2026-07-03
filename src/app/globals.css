@@ -3,43 +3,433 @@
 /* Enable class-based dark mode: `dark:` applies under a `.dark` ancestor. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Semantic color tokens — utilities like bg-card / text-fg / border-border
-   resolve to these, and the .dark block below remaps them for dark mode. */
+/* ===========================================================================
+   THEME SYSTEM
+   Two independent axes:
+     • family  → `data-theme` on <html>  (aurora | editorial | mission | clay)
+     • mode    → `.dark` class on <html> (light default / dark)
+   Every surface reads semantic tokens (--color-*) plus a small set of
+   "recipe" vars (--panel-*, --btn-*, --fill-*, --brand-grad, --aurora-*) that
+   each family redefines. Components use the neutral classes .panel /
+   .panel-card / .btn-primary / .brand-ink / .progress-fill, so swapping the
+   family attribute re-skins the whole app with no markup changes.
+   The @theme block below declares the token NAMES (so Tailwind emits bg-card,
+   text-brand, etc.); the real values come from the family blocks that follow.
+   ======================================================================== */
 @theme {
-  --color-surface: #fafafa;
+  --color-surface: #f7f7fb;
   --color-card: #ffffff;
   --color-border: #e5e5e5;
   --color-fg: #171717;
   --color-muted: #6b7280;
   --color-faint: #9ca3af;
-  --color-track: #f1f1f1;
-  --color-accent: #171717;
+  --color-track: #ececf3;
+  --color-accent: #7c3aed;
   --color-accent-fg: #ffffff;
+  --color-brand: #7c3aed;
+  --color-brand-2: #d946ef;
+  --color-brand-3: #06b6d4;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-:root {
+/* ---- 1 · AURORA GLASS (default) ---------------------------------------- */
+:root,
+[data-theme="aurora"] {
   color-scheme: light;
-}
+  --color-surface: #f7f7fb;
+  --color-card: #ffffff;
+  --color-border: #e5e5e5;
+  --color-fg: #171717;
+  --color-muted: #6b7280;
+  --color-faint: #9ca3af;
+  --color-track: #ececf3;
+  --color-accent: #7c3aed;
+  --color-accent-fg: #ffffff;
+  --color-brand: #7c3aed;
+  --color-brand-2: #d946ef;
+  --color-brand-3: #06b6d4;
 
-.dark {
+  --panel-bg: rgba(255, 255, 255, 0.62);
+  --panel-border: rgba(255, 255, 255, 0.7);
+  --panel-shadow: 0 8px 30px rgba(17, 12, 46, 0.08);
+  --panel-blur: blur(16px) saturate(1.4);
+  --card-hover-shadow: 0 18px 50px rgba(124, 58, 237, 0.18);
+  --card-hover-transform: translateY(-3px);
+
+  --brand-grad: linear-gradient(100deg, #7c3aed, #d946ef, #06b6d4);
+  --btn-grad: linear-gradient(100deg, #7c3aed, #d946ef);
+  --btn-fg: #ffffff;
+  --btn-border: 1px solid transparent;
+  --btn-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+  --btn-radius: 12px;
+  --fill-grad: linear-gradient(90deg, #7c3aed, #d946ef, #06b6d4);
+  --fill-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+
+  --aurora-1: rgba(124, 58, 237, 0.28);
+  --aurora-2: rgba(217, 70, 239, 0.22);
+  --aurora-3: rgba(6, 182, 212, 0.22);
+}
+.dark,
+[data-theme="aurora"].dark {
   color-scheme: dark;
-  --color-surface: #0b0b0c;
-  --color-card: #18181b;
+  --color-surface: #08080b;
+  --color-card: #161619;
   --color-border: #2a2a2e;
   --color-fg: #ededed;
   --color-muted: #a1a1aa;
   --color-faint: #71717a;
-  --color-track: #27272a;
-  --color-accent: #ededed;
-  --color-accent-fg: #18181b;
+  --color-track: #232327;
+  --color-accent: #8b5cf6;
+  --color-accent-fg: #ffffff;
+  --color-brand: #a78bfa;
+  --color-brand-2: #e879f9;
+  --color-brand-3: #22d3ee;
+
+  --panel-bg: rgba(24, 24, 27, 0.55);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --panel-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  --card-hover-shadow: 0 18px 50px rgba(124, 58, 237, 0.3);
+
+  --brand-grad: linear-gradient(100deg, #a78bfa, #e879f9, #22d3ee);
+  --btn-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+  --fill-grad: linear-gradient(90deg, #a78bfa, #e879f9, #22d3ee);
+  --fill-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+
+  --aurora-1: rgba(124, 58, 237, 0.32);
+  --aurora-2: rgba(217, 70, 239, 0.2);
+  --aurora-3: rgba(6, 182, 212, 0.22);
 }
 
+/* ---- 2 · EDITORIAL MONO ------------------------------------------------- */
+[data-theme="editorial"] {
+  color-scheme: light;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-border: #e6e6e8;
+  --color-fg: #18181b;
+  --color-muted: #71717a;
+  --color-faint: #a1a1aa;
+  --color-track: #f1f1f2;
+  --color-accent: #4f46e5;
+  --color-accent-fg: #ffffff;
+  --color-brand: #4f46e5;
+  --color-brand-2: #4f46e5;
+  --color-brand-3: #6366f1;
+
+  --panel-bg: #ffffff;
+  --panel-border: #e6e6e8;
+  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --panel-blur: none;
+  --card-hover-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  --card-hover-transform: translateY(-2px);
+
+  --brand-grad: #4f46e5;
+  --btn-grad: #4f46e5;
+  --btn-fg: #ffffff;
+  --btn-border: 1px solid transparent;
+  --btn-shadow: none;
+  --btn-radius: 8px;
+  --fill-grad: #4f46e5;
+  --fill-shadow: none;
+
+  --aurora-1: transparent;
+  --aurora-2: transparent;
+  --aurora-3: transparent;
+}
+[data-theme="editorial"].dark {
+  color-scheme: dark;
+  --color-surface: #0b0b0c;
+  --color-card: #141416;
+  --color-border: #242427;
+  --color-fg: #ededed;
+  --color-muted: #a1a1aa;
+  --color-faint: #6b6b70;
+  --color-track: #242428;
+  --color-accent: #818cf8;
+  --color-accent-fg: #0b0b0c;
+  --color-brand: #818cf8;
+  --color-brand-2: #818cf8;
+  --color-brand-3: #a5b4fc;
+
+  --panel-bg: #141416;
+  --panel-border: #242427;
+  --panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --card-hover-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+
+  --brand-grad: #a5b4fc;
+  --btn-grad: #6366f1;
+  --fill-grad: #818cf8;
+}
+
+/* ---- 3 · MISSION CONTROL ------------------------------------------------ */
+[data-theme="mission"] {
+  color-scheme: light;
+  --color-surface: #eef2f6;
+  --color-card: #ffffff;
+  --color-border: #d4dde4;
+  --color-fg: #0f2230;
+  --color-muted: #5b6b78;
+  --color-faint: #93a3ae;
+  --color-track: #dde5eb;
+  --color-accent: #0e7490;
+  --color-accent-fg: #ffffff;
+  --color-brand: #0891b2;
+  --color-brand-2: #0e7490;
+  --color-brand-3: #059669;
+
+  --panel-bg: #ffffff;
+  --panel-border: #d4dde4;
+  --panel-shadow: 0 1px 3px rgba(15, 34, 48, 0.06);
+  --panel-blur: none;
+  --card-hover-shadow: 0 6px 18px rgba(8, 145, 178, 0.12);
+  --card-hover-transform: translateY(-2px);
+
+  --brand-grad: #0e7490;
+  --btn-grad: #ffffff;
+  --btn-fg: #0891b2;
+  --btn-border: 1px solid #b6cbd6;
+  --btn-shadow: none;
+  --btn-radius: 8px;
+  --fill-grad: #0891b2;
+  --fill-shadow: 0 0 8px rgba(8, 145, 178, 0.4);
+
+  --aurora-1: transparent;
+  --aurora-2: transparent;
+  --aurora-3: transparent;
+}
+[data-theme="mission"].dark {
+  color-scheme: dark;
+  --color-surface: #0a0e14;
+  --color-card: #0f1620;
+  --color-border: #1b2733;
+  --color-fg: #c9d1d9;
+  --color-muted: #8b949e;
+  --color-faint: #586069;
+  --color-track: #16202b;
+  --color-accent: #22d3ee;
+  --color-accent-fg: #06121a;
+  --color-brand: #22d3ee;
+  --color-brand-2: #22d3ee;
+  --color-brand-3: #4ade80;
+
+  --panel-bg: #0f1620;
+  --panel-border: #1b2733;
+  --panel-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --card-hover-shadow: 0 0 0 1px #22d3ee, 0 8px 24px rgba(34, 211, 238, 0.15);
+
+  --brand-grad: #22d3ee;
+  --btn-grad: #0f1620;
+  --btn-fg: #22d3ee;
+  --btn-border: 1px solid #1e3a44;
+  --fill-grad: #22d3ee;
+  --fill-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+}
+/* Terminal flavour: mono wordmark/heading + neon percent. */
+[data-theme="mission"] .brand-ink {
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+/* ---- 5 · SOFT CLAY ------------------------------------------------------ */
+[data-theme="clay"] {
+  color-scheme: light;
+  --color-surface: #eceaff;
+  --color-card: #f3f2ff;
+  --color-border: transparent;
+  --color-fg: #3b3663;
+  --color-muted: #6a6491;
+  --color-faint: #9a94c0;
+  --color-track: #ded9ff;
+  --color-accent: #8b5cf6;
+  --color-accent-fg: #ffffff;
+  --color-brand: #7c6cf0;
+  --color-brand-2: #a78bfa;
+  --color-brand-3: #34d399;
+
+  --panel-bg: #f3f2ff;
+  --panel-border: transparent;
+  --panel-shadow: 8px 8px 18px #d3cff2, -8px -8px 18px #ffffff;
+  --panel-blur: none;
+  --card-hover-shadow: 10px 10px 22px #cec9f0, -10px -10px 22px #ffffff;
+  --card-hover-transform: translateY(-2px);
+
+  --brand-grad: linear-gradient(100deg, #a78bfa, #34d399);
+  --btn-grad: linear-gradient(135deg, #a78bfa, #8b5cf6);
+  --btn-fg: #ffffff;
+  --btn-border: 1px solid transparent;
+  --btn-shadow: 5px 5px 12px #cec9f0, -4px -4px 10px #ffffff;
+  --btn-radius: 14px;
+  --fill-grad: linear-gradient(90deg, #a78bfa, #34d399);
+  --fill-shadow: none;
+
+  --aurora-1: rgba(167, 139, 250, 0.22);
+  --aurora-2: rgba(196, 181, 253, 0.18);
+  --aurora-3: rgba(52, 211, 153, 0.16);
+}
+[data-theme="clay"].dark {
+  color-scheme: dark;
+  --color-surface: #211f31;
+  --color-card: #282640;
+  --color-border: transparent;
+  --color-fg: #e7e4ff;
+  --color-muted: #a9a4d0;
+  --color-faint: #7a749f;
+  --color-track: #1e1c2e;
+  --color-accent: #a78bfa;
+  --color-accent-fg: #1a1826;
+  --color-brand: #c4b5fd;
+  --color-brand-2: #a78bfa;
+  --color-brand-3: #5eead4;
+
+  --panel-bg: #282640;
+  --panel-border: transparent;
+  --panel-shadow: 8px 8px 18px #191727, -8px -8px 18px #37345a;
+  --card-hover-shadow: 10px 10px 22px #161425, -10px -10px 22px #3a3760;
+
+  --brand-grad: linear-gradient(100deg, #c4b5fd, #5eead4);
+  --btn-shadow: 5px 5px 12px #191727, -4px -4px 10px #37345a;
+  --fill-grad: linear-gradient(90deg, #a78bfa, #5eead4);
+
+  --aurora-1: rgba(167, 139, 250, 0.18);
+  --aurora-2: rgba(129, 140, 248, 0.14);
+  --aurora-3: rgba(94, 234, 212, 0.12);
+}
+[data-theme="clay"] .panel-card {
+  border-radius: 22px;
+}
+[data-theme="clay"] .progress-track {
+  box-shadow: inset 2px 2px 4px rgba(60, 50, 120, 0.14);
+}
+
+/* ===========================================================================
+   Shared skeleton + recipe classes (family-agnostic; read the vars above)
+   ======================================================================== */
 body {
+  position: relative;
   background: var(--color-surface);
   color: var(--color-fg);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Ambient color field (aurora blobs). Families that want a flat background set
+   --aurora-* to transparent, so this renders nothing. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20% -10% 0 -10%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42rem 42rem at 12% -8%, var(--aurora-1), transparent 60%),
+    radial-gradient(38rem 38rem at 88% 4%, var(--aurora-3), transparent 60%),
+    radial-gradient(34rem 34rem at 60% 30%, var(--aurora-2), transparent 55%);
+  filter: saturate(1.1);
+  animation: aurora-drift 22s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(0, -3%, 0) scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+  }
+}
+
+/* Elevated surface (header, hero, cards). */
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: var(--panel-blur, none);
+  -webkit-backdrop-filter: var(--panel-blur, none);
+}
+
+/* Interactive card lift. */
+.panel-card {
+  position: relative;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+.panel-card:hover {
+  transform: var(--card-hover-transform);
+  box-shadow: var(--card-hover-shadow);
+}
+/* Aurora-only gradient ring on hover. */
+[data-theme="aurora"] .panel-card::after,
+:root .panel-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--brand-grad);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+[data-theme="aurora"] .panel-card:hover::after,
+:root .panel-card:hover::after {
+  opacity: 1;
+}
+/* Non-aurora families: no gradient ring. */
+[data-theme="editorial"] .panel-card::after,
+[data-theme="mission"] .panel-card::after,
+[data-theme="clay"] .panel-card::after {
+  content: none;
+}
+
+/* Accent-inked text (logo, heading emphasis). */
+.brand-ink {
+  background: var(--brand-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Primary call-to-action. */
+.btn-primary {
+  background: var(--btn-grad);
+  color: var(--btn-fg);
+  border: var(--btn-border, 1px solid transparent);
+  border-radius: var(--btn-radius, 12px);
+  box-shadow: var(--btn-shadow, none);
+  transition:
+    box-shadow 0.2s ease,
+    filter 0.2s ease,
+    transform 0.1s ease;
+}
+.btn-primary:hover {
+  filter: brightness(1.04);
+}
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* Progress bar fill. */
+.progress-fill {
+  background: var(--fill-grad);
+  box-shadow: var(--fill-shadow, none);
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tabular/mono figures for the number-forward families. */
+[data-theme="editorial"] .pct,
+[data-theme="mission"] .pct {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Form controls follow the theme explicitly (avoids OS-driven contrast bugs). */
@@ -49,7 +439,6 @@ select {
   color: var(--color-fg);
   background-color: var(--color-card);
 }
-
 input::placeholder,
 textarea::placeholder {
   color: var(--color-faint);

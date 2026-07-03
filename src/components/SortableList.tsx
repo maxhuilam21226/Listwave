@@ -42,12 +42,15 @@ export default function SortableList<T extends Sortable>({
   const idsKey = byManual.map((i) => i.id).join(",");
 
   // Local working copy so a drag re-renders optimistically. Re-synced during
-  // render whenever the set of ids changes (add/remove/refresh) — the
-  // React-recommended "adjust state from a previous-value slot" pattern.
+  // render whenever the items change — not just when the SET of ids changes
+  // (add/remove/reorder) but also when an item's CONTENT changes (an edit), so
+  // an in-place edit isn't masked by this stale copy — the React-recommended
+  // "adjust state from a previous-value slot" pattern.
+  const syncKey = JSON.stringify(byManual);
   const [order, setOrder] = useState<T[]>(byManual);
-  const [syncedKey, setSyncedKey] = useState(idsKey);
-  if (syncedKey !== idsKey) {
-    setSyncedKey(idsKey);
+  const [syncedKey, setSyncedKey] = useState(syncKey);
+  if (syncedKey !== syncKey) {
+    setSyncedKey(syncKey);
     setOrder(byManual);
   }
 

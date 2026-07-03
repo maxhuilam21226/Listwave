@@ -92,9 +92,17 @@ export interface Outlet {
   id: string;
   user_id: string;
   project_id: string | null;
+  /**
+   * For a project copy, the master outlet it was copied from (so a master edit
+   * propagates to exactly its copies). Null on master rows, and on copies whose
+   * master was since deleted.
+   */
+  master_outlet_id: string | null;
   name: string;
   url: string;
   description: string;
+  /** Whether submitting to this outlet costs money. Defaults to "free". */
+  cost: OutletCost;
   sort_order: number;
   /**
    * Per-outlet copy-on-write field content: maps a submit-form field `key` to
@@ -109,7 +117,7 @@ export interface Outlet {
 }
 
 /** Editable subset of an Outlet (what the add/edit form submits). */
-export type OutletInput = Pick<Outlet, "name" | "url" | "description">;
+export type OutletInput = Pick<Outlet, "name" | "url" | "description" | "cost">;
 
 /** An outlet enriched with a curated guide overlay when its hostname matches. */
 export interface OutletEnriched extends Outlet {

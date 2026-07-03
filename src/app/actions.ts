@@ -39,9 +39,11 @@ export async function saveProject(input: ProjectInput, id?: string) {
         master.map((o) => ({
           user_id: user.id,
           project_id: projectId,
+          master_outlet_id: o.id,
           name: o.name,
           url: o.url,
           description: o.description,
+          cost: o.cost,
           sort_order: o.sort_order,
         })),
       );
@@ -103,7 +105,14 @@ export async function addOutlet(input: OutletInput, projectId?: string) {
   revalidateOutletList(projectId);
 }
 
-/** Edit an existing outlet's name/url/description. */
+/**
+ * Edit an existing outlet's name/url/description.
+ *
+ * Editing a MASTER outlet (no `projectId`) propagates the change to every
+ * project's copy of that outlet, found via their `master_outlet_id` link. Each
+ * copy's per-outlet `field_overrides` are left untouched. A project-scoped edit
+ * (`projectId` set) only touches that one row.
+ */
 export async function updateOutlet(
   id: string,
   input: OutletInput,
@@ -112,6 +121,23 @@ export async function updateOutlet(
   const supabase = await createClient();
   const { error } = await supabase.from("outlets").update(input).eq("id", id);
   if (error) throw error;
+
+  // Propagate a master edit to that outlet's project copies (matched by the
+  // FK, so it's exact even if URLs collide). Project-scoped edits don't.
+  if (!projectId) {
+    const { data: copies, error: copyErr } = await supabase
+      .from("outlets")
+      .update(input)
+      .eq("master_outlet_id", id)
+      .select("project_id");
+    if (copyErr) throw copyErr;
+    // Refresh every project whose copy we just touched.
+    for (const pid of new Set(
+      (copies ?? []).map((r) => (r as { project_id: string }).project_id),
+    )) {
+      revalidatePath(`/projects/${pid}`);
+    }
+  }
 
   revalidateOutletList(projectId);
 }
@@ -159,6 +185,28 @@ export async function reorderOutlets(orderedIds: string[], projectId?: string) {
   if (failed?.error) throw failed.error;
 
   revalidateOutletList(projectId);
+}
+
+/**
+ * Persist the current user's theme choice so it follows them across devices.
+ * `mode` null = follow the OS setting. Best-effort: called fire-and-forget from
+ * the theme picker, which has already applied the change locally.
+ */
+export async function saveThemePreference(
+  family: "aurora" | "editorial" | "mission" | "clay",
+  mode: "light" | "dark" | null,
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase.from("profiles").upsert(
+    { user_id: user.id, theme_family: family, theme_mode: mode },
+    { onConflict: "user_id" },
+  );
+  if (error) throw error;
 }
 
 export async function deleteProject(id: string) {

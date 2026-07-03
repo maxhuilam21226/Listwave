@@ -6,21 +6,68 @@ import { createClient } from "@/lib/supabase/client";
 
 type Mode = "signin" | "signup";
 
+/** Where the OAuth / magic-link callback lands (handled by /auth/confirm). */
+function callbackUrl() {
+  return `${window.location.origin}/auth/confirm?next=/`;
+}
+
 export default function LoginPage() {
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"" | "password" | "magic" | "google">("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
+  function reset() {
     setError("");
     setNotice("");
+  }
+
+  // --- Google OAuth ---------------------------------------------------------
+  async function handleGoogle() {
+    reset();
+    setBusy("google");
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callbackUrl() },
+    });
+    if (error) {
+      setError(error.message);
+      setBusy("");
+    }
+    // On success the browser is redirected to Google, so nothing else to do.
+  }
+
+  // --- Magic link -----------------------------------------------------------
+  async function handleMagicLink() {
+    reset();
+    if (!email) {
+      setError("Enter your email first.");
+      return;
+    }
+    setBusy("magic");
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: callbackUrl() },
+    });
+    setBusy("");
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setNotice(`Magic link sent to ${email}. Check your inbox to finish signing in.`);
+  }
+
+  // --- Email + password -----------------------------------------------------
+  async function handlePassword(e: React.FormEvent) {
+    e.preventDefault();
+    reset();
+    setBusy("password");
 
     const supabase = createClient();
 
@@ -28,7 +75,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setError(error.message);
-        setBusy(false);
+        setBusy("");
         return;
       }
       if (data.session) {
@@ -41,14 +88,14 @@ export default function LoginPage() {
           "Supabase, then sign in.",
       );
       setMode("signin");
-      setBusy(false);
+      setBusy("");
       return;
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message);
-      setBusy(false);
+      setBusy("");
       return;
     }
     window.location.assign("/");
@@ -74,7 +121,24 @@ export default function LoginPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+      {/* Google */}
+      <button
+        onClick={handleGoogle}
+        disabled={!!busy}
+        className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-fg transition hover:bg-track disabled:opacity-50"
+      >
+        <GoogleIcon />
+        {busy === "google" ? "Redirecting…" : "Continue with Google"}
+      </button>
+
+      <div className="my-6 flex items-center gap-3 text-xs text-faint">
+        <span className="h-px flex-1 bg-border" />
+        or
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      {/* Email + password / magic link */}
+      <form onSubmit={handlePassword} className="space-y-4">
         <input
           type="email"
           required
@@ -84,6 +148,22 @@ export default function LoginPage() {
           autoComplete="email"
           className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-fg"
         />
+
+        <button
+          type="button"
+          onClick={handleMagicLink}
+          disabled={!!busy}
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm font-medium text-fg transition hover:bg-track disabled:opacity-50"
+        >
+          {busy === "magic" ? "Sending…" : "Email me a magic link"}
+        </button>
+
+        <div className="my-2 flex items-center gap-3 text-xs text-faint">
+          <span className="h-px flex-1 bg-border" />
+          or use a password
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
         <input
           type="password"
           required
@@ -96,10 +176,10 @@ export default function LoginPage() {
         />
         <button
           type="submit"
-          disabled={busy}
+          disabled={!!busy}
           className="w-full rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-fg disabled:opacity-50"
         >
-          {busy
+          {busy === "password"
             ? "Please wait…"
             : mode === "signin"
               ? "Sign in"
@@ -111,8 +191,7 @@ export default function LoginPage() {
       <button
         onClick={() => {
           setMode((m) => (m === "signin" ? "signup" : "signin"));
-          setError("");
-          setNotice("");
+          reset();
         }}
         className="mt-6 text-sm text-muted hover:text-fg"
       >
@@ -121,5 +200,28 @@ export default function LoginPage() {
           : "Already have an account? Sign in"}
       </button>
     </main>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38Z"
+      />
+    </svg>
   );
 }

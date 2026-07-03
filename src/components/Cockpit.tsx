@@ -10,7 +10,12 @@ import {
   setSubmissionStatus,
   updateOutlet,
 } from "@/app/actions";
-import type { OutletEnriched, OutletInput, SubmissionStatus } from "@/lib/types";
+import type {
+  OutletCost,
+  OutletEnriched,
+  OutletInput,
+  SubmissionStatus,
+} from "@/lib/types";
 import OutletForm from "@/components/OutletForm";
 import SortableList from "@/components/SortableList";
 
@@ -28,6 +33,7 @@ export default function Cockpit({
   const router = useRouter();
   const [statuses, setStatuses] = useState<Statuses>(initialStatuses);
   const [search, setSearch] = useState("");
+  const [costFilter, setCostFilter] = useState<"all" | OutletCost>("all");
   const [hideCompleted, setHideCompleted] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -44,6 +50,7 @@ export default function Cockpit({
     return outlets.filter((o) => {
       // "Hide completed" hides both submitted and skipped — anything done with.
       if (hideCompleted && statusOf(o.id) !== "todo") return false;
+      if (costFilter !== "all" && o.cost !== costFilter) return false;
       if (
         q &&
         !o.name.toLowerCase().includes(q) &&
@@ -53,10 +60,11 @@ export default function Cockpit({
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outlets, search, hideCompleted, statuses]);
+  }, [outlets, search, costFilter, hideCompleted, statuses]);
 
   // Reordering only makes sense over the full list, not a filtered subset.
-  const canReorder = search.trim() === "" && !hideCompleted;
+  const canReorder =
+    search.trim() === "" && costFilter === "all" && !hideCompleted;
 
   function update(id: string, status: SubmissionStatus) {
     setStatuses((s) => ({ ...s, [id]: status }));
@@ -120,6 +128,18 @@ export default function Cockpit({
           placeholder="Search outlets…"
           className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
         />
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <span className="text-xs">Cost</span>
+          <select
+            value={costFilter}
+            onChange={(e) => setCostFilter(e.target.value as "all" | OutletCost)}
+            className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm text-fg outline-none focus:border-fg"
+          >
+            <option value="all">All</option>
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </label>
         <label className="flex cursor-pointer items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -220,6 +240,7 @@ function Row({
             {outlet.name}
           </Link>
           {outlet.guided && <Badge tone="green">✓ guided</Badge>}
+          {outlet.cost === "paid" && <Badge tone="amber">$ paid</Badge>}
         </div>
         {outlet.description && (
           <p className="truncate text-xs text-faint">{outlet.description}</p>
@@ -323,11 +344,12 @@ function Badge({
   tone,
 }: {
   children: React.ReactNode;
-  tone: "green" | "gray";
+  tone: "green" | "gray" | "amber";
 }) {
   const tones = {
     green: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
     gray: "bg-track text-muted",
+    amber: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
   };
   return (
     <span

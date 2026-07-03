@@ -11,6 +11,37 @@ export async function getUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
+export type ThemeFamily = "aurora" | "editorial" | "mission" | "clay";
+export type ThemePreference = {
+  family: ThemeFamily;
+  mode: "light" | "dark" | null;
+};
+
+/**
+ * The current user's saved theme preference, or null when logged out / unset.
+ * `mode: null` means "follow the OS setting". Read at the root layout so a fresh
+ * device paints the right theme with no flash.
+ */
+export async function getThemePreference(): Promise<ThemePreference | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("theme_family, theme_mode")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    family: (data.theme_family as ThemeFamily) ?? "aurora",
+    mode: (data.theme_mode as "light" | "dark" | null) ?? null,
+  };
+}
+
 export async function getProjects(): Promise<Project[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { OutletInput } from "@/lib/types";
+import type { OutletCost, OutletInput } from "@/lib/types";
 
-/** Add/edit form for a single outlet (name + url + optional description). */
+/** Add/edit form for a single outlet (name + url + cost + optional description). */
 export default function OutletForm({
   initial,
   onSubmit,
@@ -11,7 +11,7 @@ export default function OutletForm({
   submitLabel,
   embedded,
 }: {
-  initial?: { name: string; url: string; description: string };
+  initial?: { name: string; url: string; description: string; cost: OutletCost };
   onSubmit: (input: OutletInput) => void;
   onCancel: () => void;
   submitLabel: string;
@@ -20,13 +20,14 @@ export default function OutletForm({
   const [name, setName] = useState(initial?.name ?? "");
   const [url, setUrl] = useState(initial?.url ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [cost, setCost] = useState<OutletCost>(initial?.cost ?? "free");
 
   const canSubmit = name.trim() !== "" && url.trim() !== "";
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
-    onSubmit({ name: name.trim(), url: url.trim(), description: description.trim() });
+    onSubmit({ name: name.trim(), url: url.trim(), description: description.trim(), cost });
   }
 
   return (
@@ -53,12 +54,25 @@ export default function OutletForm({
           className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
         />
       </div>
-      <input
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Short description (optional)"
-        className="w-full rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Short description (optional)"
+          className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
+        />
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <span className="text-xs">Cost</span>
+          <select
+            value={cost}
+            onChange={(e) => setCost(e.target.value as OutletCost)}
+            className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm text-fg outline-none focus:border-fg"
+          >
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </label>
+      </div>
       <div className="flex gap-2">
         <button
           type="submit"

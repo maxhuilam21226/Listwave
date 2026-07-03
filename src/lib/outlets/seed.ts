@@ -3,7 +3,9 @@
 // user's account is seeded with — after that, outlets are managed in-app (DB).
 import type { OutletInput } from "@/lib/types";
 
-export const OUTLET_SEED: OutletInput[] = [
+// Seed entries omit `cost`; the DB column defaults to 'free' on insert and it's
+// adjustable per-outlet in-app afterwards.
+export const OUTLET_SEED: Omit<OutletInput, "cost">[] = [
   {
     "name": "Altern",
     "url": "https://altern.codes",

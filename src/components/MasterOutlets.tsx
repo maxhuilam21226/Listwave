@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addOutlet, deleteOutlet, reorderOutlets, updateOutlet } from "@/app/actions";
-import type { Outlet, OutletInput } from "@/lib/types";
+import type { Outlet, OutletCost, OutletInput } from "@/lib/types";
 import OutletForm from "@/components/OutletForm";
 import SortableList from "@/components/SortableList";
 
@@ -14,21 +14,26 @@ import SortableList from "@/components/SortableList";
 export default function MasterOutlets({ outlets }: { outlets: Outlet[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [costFilter, setCostFilter] = useState<"all" | OutletCost>("all");
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return outlets;
-    return outlets.filter(
-      (o) =>
-        o.name.toLowerCase().includes(q) ||
-        o.description.toLowerCase().includes(q),
-    );
-  }, [outlets, search]);
+    return outlets.filter((o) => {
+      if (costFilter !== "all" && o.cost !== costFilter) return false;
+      if (
+        q &&
+        !o.name.toLowerCase().includes(q) &&
+        !o.description.toLowerCase().includes(q)
+      )
+        return false;
+      return true;
+    });
+  }, [outlets, search, costFilter]);
 
-  const canReorder = search.trim() === "";
+  const canReorder = search.trim() === "" && costFilter === "all";
 
   function create(input: OutletInput) {
     startTransition(async () => {
@@ -70,6 +75,18 @@ export default function MasterOutlets({ outlets }: { outlets: Outlet[] }) {
           placeholder="Search outlets…"
           className="min-w-40 flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-fg"
         />
+        <label className="flex items-center gap-2 text-sm text-muted">
+          <span className="text-xs">Cost</span>
+          <select
+            value={costFilter}
+            onChange={(e) => setCostFilter(e.target.value as "all" | OutletCost)}
+            className="rounded-lg border border-border bg-card px-2 py-1.5 text-sm text-fg outline-none focus:border-fg"
+          >
+            <option value="all">All</option>
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </label>
         <button
           onClick={() => {
             setAdding((a) => !a);
@@ -149,7 +166,14 @@ function Row({
     <div className="flex items-center gap-2 px-4 py-2.5">
       {dragHandle}
       <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{outlet.name}</div>
+        <div className="flex items-center gap-2">
+          <span className="truncate font-medium">{outlet.name}</span>
+          {outlet.cost === "paid" && (
+            <span className="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+              $ paid
+            </span>
+          )}
+        </div>
         {outlet.description && (
           <p className="truncate text-xs text-faint">{outlet.description}</p>
         )}

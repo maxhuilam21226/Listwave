@@ -39,6 +39,13 @@ create table if not exists public.projects (
 -- src/lib/data.ts); a non-null project_id marks a copy owned by that one
 -- project. sort_order drives manual drag-ordering within a list.
 --
+-- cost flags whether submitting to the outlet costs money ('free' | 'paid'),
+-- adjustable per-outlet in-app. If migrating an older DB without dropping the
+-- table, add the column with:
+--     alter table public.outlets
+--       add column if not exists cost text not null default 'free'
+--         check (cost in ('free','paid'));
+--
 -- field_overrides is a per-outlet copy-on-write map of submit-form field key ->
 -- the user's literal text for THIS outlet. A missing key means "inherit the
 -- value computed from the project kit"; once a key is present that field is
@@ -46,14 +53,32 @@ create table if not exists public.projects (
 -- an older DB without dropping the table, add the column with:
 --     alter table public.outlets
 --       add column if not exists field_overrides jsonb not null default '{}'::jsonb;
+--
+-- master_outlet_id links a project copy back to the master row it was copied
+-- from (null on master rows themselves, and on copies whose master was since
+-- deleted). It lets a master edit propagate to exactly its copies. If migrating
+-- an older DB, add the column and backfill existing copies by URL:
+--     alter table public.outlets
+--       add column if not exists master_outlet_id uuid
+--         references public.outlets (id) on delete set null;
+--     update public.outlets c
+--        set master_outlet_id = m.id
+--       from public.outlets m
+--      where c.project_id is not null
+--        and c.master_outlet_id is null
+--        and m.project_id is null
+--        and m.user_id = c.user_id
+--        and m.url = c.url;
 -- ---------------------------------------------------------------------------
 create table if not exists public.outlets (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users (id) on delete cascade,
   project_id  uuid references public.projects (id) on delete cascade,
+  master_outlet_id uuid references public.outlets (id) on delete set null,
   name        text not null,
   url         text not null,
   description text not null default '',
+  cost        text not null default 'free' check (cost in ('free','paid')),
   sort_order  double precision not null default 0,
   field_overrides jsonb not null default '{}'::jsonb,
   created_at  timestamptz not null default now(),
@@ -62,6 +87,9 @@ create table if not exists public.outlets (
 
 create index if not exists outlets_user_project_idx
   on public.outlets (user_id, project_id);
+
+create index if not exists outlets_master_idx
+  on public.outlets (master_outlet_id);
 
 -- ---------------------------------------------------------------------------
 -- submissions: progress for one project at one outlet.
@@ -79,6 +107,21 @@ create table if not exists public.submissions (
 );
 
 create index if not exists submissions_project_idx on public.submissions (project_id);
+
+-- ---------------------------------------------------------------------------
+-- profiles: one row per user for cross-device UI preferences (the chosen theme
+-- family + light/dark mode). theme_mode is nullable — null means "follow the OS
+-- setting". If migrating an existing DB, just run this whole block; it is
+-- additive (no drops needed).
+-- ---------------------------------------------------------------------------
+create table if not exists public.profiles (
+  user_id      uuid primary key references auth.users (id) on delete cascade,
+  theme_family text not null default 'aurora'
+                 check (theme_family in ('aurora','editorial','mission','clay')),
+  theme_mode   text check (theme_mode in ('light','dark')),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
 
 -- ---------------------------------------------------------------------------
 -- updated_at trigger
@@ -103,12 +146,21 @@ drop trigger if exists submissions_set_updated_at on public.submissions;
 create trigger submissions_set_updated_at before update on public.submissions
   for each row execute function public.set_updated_at();
 
+drop trigger if exists profiles_set_updated_at on public.profiles;
+create trigger profiles_set_updated_at before update on public.profiles
+  for each row execute function public.set_updated_at();
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security — every row is scoped to its owner.
 -- ---------------------------------------------------------------------------
 alter table public.projects enable row level security;
 alter table public.outlets enable row level security;
 alter table public.submissions enable row level security;
+alter table public.profiles enable row level security;
+
+drop policy if exists "own profile" on public.profiles;
+create policy "own profile" on public.profiles
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 drop policy if exists "own projects" on public.projects;
 create policy "own projects" on public.projects
