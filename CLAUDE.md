@@ -69,38 +69,29 @@ Next.js 16 (App Router, `src/`, Turbopack) · TypeScript · Tailwind v4 · Supab
 --noEmit` / `npm run lint` to verify.
 
 ## Status & next steps
-See memory `launchkit-build-state` for current status and the ordered next
-steps. Pushed through `423e1ef` on `main` (rebrand + master/project split +
-drag/sort ordering + per-outlet field overrides + WebGPU AI rewording). Live
-Supabase schema is in sync (`field_overrides` column applied) and the override +
-AI features are confirmed working end-to-end.
+See memory `launchkit-build-state` for full detail. **✅ LIVE IN PRODUCTION at
+https://listwave.vercel.app** (hosted on **Vercel** — auto-deploys on push to
+`main`, PRs get preview URLs). `main` is at `53fe231`; working tree clean.
 
-UNCOMMITTED (working tree on `423e1ef`, tsc + lint pass) — three stacked features:
-1. **Paid/free outlet cost** — `outlets.cost` (`'free'|'paid'`) column, Free/Paid
-   select in `OutletForm`, All/Free/Paid filter + `$ paid` badge in `Cockpit` +
-   `MasterOutlets`. `cost` on `Outlet`/`OutletInput`; `saveProject` copies it;
-   master cost-edit propagates to copies.
-2. **Delete projects from the dashboard** — hover/focus trash button per card
-   (`DeleteProjectButton.tsx`) calling the existing `deleteProject` action
-   (cascades outlets+submissions clean).
-3. **Multi-theme system + cross-device persistence** — 4 families (**Aurora Glass**
-   default / **Editorial Mono** / **Mission Control** / **Soft Clay**), each in
-   light + dark. Axes: `data-theme` attr × `.dark` class. `globals.css` defines
-   per-family semantic tokens + recipe vars, consumed by neutral classes
-   **`.panel` / `.panel-card` / `.btn-primary` / `.brand-ink` / `.progress-fill`**
-   (these replaced the aurora-only `.glass`/`.btn-aurora`/`.text-aurora`). Picker
-   = `ThemeControls.tsx` (replaced `ThemeToggle.tsx`). Choice saved per-user in new
-   **`public.profiles`** table via `saveThemePreference`; `getThemePreference` +
-   the layout's server-embedded `themeInitScript` make a fresh device paint the
-   right theme with no flash (precedence DB → localStorage → OS). NOTE: only the
-   dashboard + shell use the recipe classes so far; other screens adopt theme
-   COLORS but not per-theme surface styling.
+Shipped & verified (tsc + lint + `next build` pass; auth paths tested in prod):
+- **Paid/free outlet cost** (`outlets.cost`), **delete-project** trash button on
+  dashboard cards, **4-family × light/dark theme system** + cross-device
+  persistence via `public.profiles` (`ThemeControls` picker; `.panel`/
+  `.panel-card`/`.btn-primary`/`.brand-ink`/`.progress-fill` recipe classes).
+- **Default theme = Aurora Glass DARK** (`themeInitScript` in `layout.tsx` falls
+  back to dark, not OS; a user's saved choice still wins).
+- **Auth = Google OAuth + magic link + email/password** (all three in
+  `src/app/login/page.tsx`, all land on `/auth/confirm`). Master outlet list is
+  already per-user via RLS. Top-bar "Manage outlets" is the single outlet-admin
+  entry point (dashboard duplicate button removed).
+- **Supabase is fully migrated** (`cost` column + `profiles` table applied);
+  Auth URL config points at the vercel.app domain.
 
-**TODO before live:** apply TWO migrations to Supabase — (a) `alter table
-public.outlets add column if not exists cost text not null default 'free' check
-(cost in ('free','paid'));` and (b) the `public.profiles` CREATE TABLE + trigger +
-RLS block (in `supabase/schema.sql`) — then commit the working tree.
+Hosting note: do NOT retry Cloudflare — Next 16's `proxy.ts` is forced onto the
+Node runtime and OpenNext-Cloudflare doesn't support Node middleware (blocker,
+cloudflare/workers-sdk#13755). Vercel runs Next 16 + proxy.ts natively.
 
-Open: apply migrations + commit + dogfood cost/delete/theme (incl. cross-device
-follow); optionally roll the theme recipes onto the remaining screens; the 14
-curated guide field-maps are still UNVERIFIED.
+Open (polish only): roll the theme recipe classes onto the remaining screens
+(Cockpit/OutletSubmit/ProjectForm/`/outlets`/login adopt theme COLORS but not
+per-theme surface styling); the 14 curated guide field-maps are still UNVERIFIED
+against live submit forms.

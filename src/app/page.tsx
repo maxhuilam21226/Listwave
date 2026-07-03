@@ -2,8 +2,18 @@ import Link from "next/link";
 import { getMasterOutlets, getOutletCountsByProject, getProjects } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 import DeleteProjectButton from "@/components/DeleteProjectButton";
+import LandingPage from "@/components/LandingPage";
 
 export default async function HomePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return <LandingPage />;
+  }
+
   const [projects, masterOutlets, outletsByProject] = await Promise.all([
     getProjects(),
     getMasterOutlets(),
@@ -12,7 +22,6 @@ export default async function HomePage() {
   const masterCount = masterOutlets.length;
 
   // Submitted counts per project in one query.
-  const supabase = await createClient();
   const { data: subs } = await supabase
     .from("submissions")
     .select("project_id, status")

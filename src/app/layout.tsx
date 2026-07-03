@@ -70,12 +70,19 @@ export default async function RootLayout({
                 </Link>
               )}
               <ThemeControls />
-              {user && (
+              {user ? (
                 <form action="/auth/signout" method="post">
                   <button className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-fg hover:bg-track">
                     Sign out
                   </button>
                 </form>
+              ) : (
+                <Link
+                  href="/login"
+                  className="btn-primary rounded-lg px-3 py-1.5 text-sm font-semibold"
+                >
+                  Sign in
+                </Link>
               )}
             </div>
           </div>
