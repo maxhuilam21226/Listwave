@@ -19,6 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Listwave",
   description: "Prep once, launch everywhere. A personal launch cockpit.",
+  verification: {
+    google: "7585d68b8d9959f3",
+  },
 };
 
 // Runs before paint to apply the theme with no flash. The user's DB-saved
