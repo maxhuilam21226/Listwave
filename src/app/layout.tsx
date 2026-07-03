@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title: "Listwave",
   description: "Prep once, launch everywhere. A personal launch cockpit.",
   verification: {
-    google: "7585d68b8d9959f3",
+    google: "mqRiC5Duyi7m_eg74541GMg03sEXIND6_O8N6iL4CdM",
   },
 };
 
