@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import Script from "next/script";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { getThemePreference } from "@/lib/data";
@@ -54,6 +55,13 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col text-fg">
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-DWEFZGQ0MN" strategy="afterInteractive" />
+        <Script id="gtag-init" strategy="afterInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-DWEFZGQ0MN');
+        `}</Script>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         <header className="panel sticky top-0 z-40 border-x-0 border-t-0">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
