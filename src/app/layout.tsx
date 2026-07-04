@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
 import "./globals.css";
@@ -69,6 +70,7 @@ export default async function RootLayout({
               href="/"
               className="flex items-center gap-2 text-lg font-bold tracking-tight"
             >
+              <Image src="/logo.png" alt="Listwave" width={28} height={28} className="rounded-lg" />
               <span className="brand-ink">Listwave</span>
             </Link>
             <div className="flex items-center gap-2">

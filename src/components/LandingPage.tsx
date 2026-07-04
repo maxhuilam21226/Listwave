@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -44,7 +45,10 @@ function CockpitDemo() {
       </div>
       <div className="lw-app-wrap">
         <div className="lw-mini-header">
-          <span className="lw-mini-brand brand-ink">Listwave</span>
+          <span className="lw-mini-brand brand-ink flex items-center gap-1">
+            <Image src="/logo.png" alt="" width={14} height={14} className="rounded" />
+            Listwave
+          </span>
           <div className="lw-mini-nav">
             <span>Manage outlets</span>
             <span>Sign out</span>
@@ -237,7 +241,10 @@ export default function LandingPage() {
 
       {/* ── FOOTER ── */}
       <footer className="lw-footer">
-        <span className="brand-ink font-bold">Listwave</span>
+        <span className="brand-ink font-bold flex items-center gap-1.5">
+          <Image src="/logo.png" alt="" width={18} height={18} className="rounded-md" />
+          Listwave
+        </span>
         <span className="lw-fsep">·</span>
         <span className="text-sm" style={{ color: 'var(--color-muted)' }}>Built for indie hackers</span>
       </footer>

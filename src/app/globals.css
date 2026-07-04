@@ -66,9 +66,9 @@
   --fill-grad: linear-gradient(90deg, #7c3aed, #d946ef, #06b6d4);
   --fill-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
 
-  --aurora-1: rgba(124, 58, 237, 0.28);
-  --aurora-2: rgba(217, 70, 239, 0.22);
-  --aurora-3: rgba(6, 182, 212, 0.22);
+  --aurora-1: rgba(124, 58, 237, 0.42);
+  --aurora-2: rgba(217, 70, 239, 0.32);
+  --aurora-3: rgba(6, 182, 212, 0.28);
 }
 .dark,
 [data-theme="aurora"].dark {
@@ -96,9 +96,9 @@
   --fill-grad: linear-gradient(90deg, #a78bfa, #e879f9, #22d3ee);
   --fill-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
 
-  --aurora-1: rgba(124, 58, 237, 0.32);
-  --aurora-2: rgba(217, 70, 239, 0.2);
-  --aurora-3: rgba(6, 182, 212, 0.22);
+  --aurora-1: rgba(124, 58, 237, 0.46);
+  --aurora-2: rgba(217, 70, 239, 0.28);
+  --aurora-3: rgba(6, 182, 212, 0.26);
 }
 
 /* ---- 2 · EDITORIAL MONO ------------------------------------------------- */
@@ -312,6 +312,15 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Registered properties let keyframes interpolate CSS custom properties,
+   enabling each aurora blob to move on its own independent path. */
+@property --b1x { syntax: '<percentage>'; inherits: false; initial-value: 12%; }
+@property --b1y { syntax: '<percentage>'; inherits: false; initial-value: -8%; }
+@property --b2x { syntax: '<percentage>'; inherits: false; initial-value: 88%; }
+@property --b2y { syntax: '<percentage>'; inherits: false; initial-value: 4%; }
+@property --b3x { syntax: '<percentage>'; inherits: false; initial-value: 60%; }
+@property --b3y { syntax: '<percentage>'; inherits: false; initial-value: 30%; }
+
 /* Ambient color field (aurora blobs). Families that want a flat background set
    --aurora-* to transparent, so this renders nothing. */
 body::before {
@@ -321,22 +330,65 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(42rem 42rem at 12% -8%, var(--aurora-1), transparent 60%),
-    radial-gradient(38rem 38rem at 88% 4%, var(--aurora-3), transparent 60%),
-    radial-gradient(34rem 34rem at 60% 30%, var(--aurora-2), transparent 55%);
-  filter: saturate(1.1);
-  animation: aurora-drift 22s ease-in-out infinite alternate;
+    radial-gradient(42rem 42rem at var(--b1x) var(--b1y), var(--aurora-1), transparent 60%),
+    radial-gradient(38rem 38rem at var(--b2x) var(--b2y), var(--aurora-3), transparent 60%),
+    radial-gradient(34rem 34rem at var(--b3x) var(--b3y), var(--aurora-2), transparent 55%);
+  animation:
+    aurora-b1    20s ease-in-out infinite alternate,
+    aurora-b2    27s ease-in-out infinite alternate,
+    aurora-b3    16s ease-in-out infinite alternate,
+    aurora-pulse  9s ease-in-out infinite alternate;
 }
-@keyframes aurora-drift {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  100% {
-    transform: translate3d(0, -3%, 0) scale(1.08);
-  }
+
+/* Second, deeper glow layer — drifts in the opposite direction for parallax depth. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -30% -15% -10% -15%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(55rem 55rem at 50% 60%, var(--aurora-1), transparent 65%),
+    radial-gradient(40rem 40rem at 20% 80%, var(--aurora-2), transparent 60%);
+  opacity: 0.45;
+  animation: aurora-bg 34s ease-in-out infinite alternate;
 }
+
+/* Each blob drifts on its own organic path */
+@keyframes aurora-b1 {
+  0%   { --b1x: 12%; --b1y: -8%;  }
+  25%  { --b1x: 24%; --b1y: 12%;  }
+  50%  { --b1x:  6%; --b1y: 24%;  }
+  75%  { --b1x: 30%; --b1y:  4%;  }
+  100% { --b1x: 18%; --b1y: -14%; }
+}
+@keyframes aurora-b2 {
+  0%   { --b2x: 88%; --b2y:  4%;  }
+  33%  { --b2x: 74%; --b2y: -14%; }
+  66%  { --b2x: 96%; --b2y: 22%;  }
+  100% { --b2x: 80%; --b2y:  8%;  }
+}
+@keyframes aurora-b3 {
+  0%   { --b3x: 60%; --b3y: 30%; }
+  40%  { --b3x: 46%; --b3y: 10%; }
+  80%  { --b3x: 74%; --b3y: 44%; }
+  100% { --b3x: 56%; --b3y: 20%; }
+}
+/* Slow breathing: opacity + saturation + subtle hue drift for the futuristic shift */
+@keyframes aurora-pulse {
+  0%   { opacity: 0.80; filter: saturate(1.0)  hue-rotate(-8deg);  }
+  50%  { opacity: 1.00; filter: saturate(1.35) hue-rotate(0deg);   }
+  100% { opacity: 0.90; filter: saturate(1.15) hue-rotate(14deg);  }
+}
+/* Deep glow layer slow drift */
+@keyframes aurora-bg {
+  0%   { transform: translate3d(-6%, 0, 0)   scale(0.92); opacity: 0.30; }
+  100% { transform: translate3d(6%, -6%, 0)  scale(1.08); opacity: 0.50; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  body::before {
+  body::before,
+  body::after {
     animation: none;
   }
 }
@@ -397,6 +449,18 @@ body::before {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+/* Aurora: animate the brand gradient so it shifts like the hero headline. */
+[data-theme="aurora"] .brand-ink {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-brand),
+    var(--color-brand-2),
+    var(--color-brand-3),
+    var(--color-brand)
+  );
+  background-size: 300% 100%;
+  animation: lw-grad-shift 4s ease infinite;
 }
 
 /* Primary call-to-action. */

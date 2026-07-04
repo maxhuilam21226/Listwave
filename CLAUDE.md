@@ -71,7 +71,31 @@ Next.js 16 (App Router, `src/`, Turbopack) · TypeScript · Tailwind v4 · Supab
 ## Status & next steps
 See memory `launchkit-build-state` for full detail. **✅ LIVE IN PRODUCTION at
 https://listwave.vercel.app** (hosted on **Vercel** — auto-deploys on push to
-`main`, PRs get preview URLs). `main` is at `53fe231`; working tree clean.
+`main`, PRs get preview URLs). `main` is at `f36bc85` (WebLLM Xet-CDN cache
+fix); **uncommitted this session: logo, favicon/icons/manifest, Aurora animation
+enhancements, animated brand-ink** — commit & push when ready.
+
+**Logo & icons (2026-07-04, uncommitted):** `public/logo.png` (1024×1024 teal
+wave icon). Next to "Listwave" in nav (`layout.tsx`), login, landing. Favicon
+replaced: `src/app/favicon.ico` (RGBA ICO 16/32/48px), `src/app/icon.png`
+(512px), `src/app/apple-icon.png` (180px for iOS home screen). `src/app/manifest.ts`
+→ `/manifest.webmanifest` for Android home screen (purple theme_color, standalone).
+`public/icon-192.png` + `public/icon-512.png` for manifest.
+
+**Aurora animation (2026-07-04, uncommitted):** `@property` registered blob
+positions so each of the 3 aurora blobs drifts independently. `body::after`
+parallax glow layer (z-index: −2). `aurora-pulse` adds opacity + saturation +
+hue-rotate shimmer. Opacity bumped in light & dark for better visibility.
+`[data-theme="aurora"] .brand-ink` now runs `lw-grad-shift 4s` — same shifting
+color animation as "Launch everywhere" hero text — on all brand text.
+
+**WebLLM AI reword fix (2026-07-04):** in-browser ✨ reword broke with
+"Cache.add() encountered a network error" — HuggingFace moved model weights to
+their Xet CDN, which serves shards via a cross-origin 302 redirect that Chrome's
+`Cache.add()` rejects. Fixed in `src/lib/ai/webllm.ts` via `appConfig: {
+...prebuiltAppConfig, cacheBackend: "indexeddb" }` (IndexedDB backend downloads
+with plain `fetch()`, which follows the redirect). Not yet verified in prod —
+test ✨ AI after the deploy. See memory `webllm-xet-cdn-cache-fix`.
 
 Shipped & verified (tsc + lint + `next build` pass; auth paths tested in prod):
 - **Paid/free outlet cost** (`outlets.cost`), **delete-project** trash button on
@@ -86,6 +110,17 @@ Shipped & verified (tsc + lint + `next build` pass; auth paths tested in prod):
   entry point (dashboard duplicate button removed).
 - **Supabase is fully migrated** (`cost` column + `profiles` table applied);
   Auth URL config points at the vercel.app domain.
+- **Admin list sync** (`syncWithAdminMasterList` in `actions.ts`): non-admin
+  users can reset their master outlet list to the admin's current list via a 🔄
+  banner on `/outlets`. Gated behind `ConfirmModal` (`src/components/ConfirmModal.tsx`
+  — reusable themed portal dialog using `.panel`/`btn-primary` recipe classes;
+  extended with optional `cancelLabel` + `secondaryAction` props).
+- **Prepare page UX** (`OutletSubmit.tsx`): product name is read-only; status
+  buttons (Mark submitted / Skip) live in the top action bar; "Save changes"
+  button only appears when `isDirty`; no auto-save on blur; unsaved-changes
+  navigation guard intercepts in-app link clicks and shows Stay/Discard/Save modal.
+  `DeleteProjectButton` uses `ConfirmModal` (not native confirm); delete button
+  removed from Edit project form.
 
 Hosting note: do NOT retry Cloudflare — Next 16's `proxy.ts` is forced onto the
 Node runtime and OpenNext-Cloudflare doesn't support Node middleware (blocker,

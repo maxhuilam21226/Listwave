@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -103,7 +104,10 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
-      <h1 className="text-2xl font-bold">🚀 Listwave</h1>
+      <div className="flex items-center gap-2">
+        <Image src="/logo.png" alt="Listwave" width={40} height={40} className="rounded-xl" />
+        <h1 className="text-2xl font-bold brand-ink">Listwave</h1>
+      </div>
       <p className="mt-1 text-sm text-muted">
         {mode === "signin"
           ? "Sign in to manage your launches."
