@@ -69,9 +69,14 @@ export default function AIAssist({
       onResult(next);
       setStatus({ kind: "idle" });
     } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const isNetworkCache =
+        raw.includes("Cache") || raw.includes("fetch") || raw.includes("network");
       setStatus({
         kind: "error",
-        message: err instanceof Error ? err.message : "AI failed",
+        message: isNetworkCache
+          ? "Model download failed — check your connection and retry. (Requires ~1 GB from HuggingFace.)"
+          : raw || "AI failed",
       });
     }
   }
@@ -96,9 +101,16 @@ export default function AIAssist({
       </button>
 
       {status.kind === "error" && (
-        <p className="absolute right-0 z-10 mt-1 w-48 rounded border border-border bg-card p-2 text-xs text-red-600 dark:text-red-400">
-          {status.message}
-        </p>
+        <div className="absolute right-0 z-10 mt-1 w-56 rounded border border-border bg-card p-2 text-xs text-red-600 dark:text-red-400">
+          <p>{status.message}</p>
+          <button
+            type="button"
+            onClick={() => setStatus({ kind: "idle" })}
+            className="mt-1.5 rounded border border-border px-2 py-0.5 text-muted hover:bg-track"
+          >
+            Dismiss
+          </button>
+        </div>
       )}
 
       {open && !busy && (

@@ -32,13 +32,22 @@ async function getEngine(
 ): Promise<MLCEngine> {
   if (!enginePromise) {
     enginePromise = (async () => {
-      const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
+      const { CreateMLCEngine, prebuiltAppConfig } = await import(
+        "@mlc-ai/web-llm"
+      );
       return CreateMLCEngine(MODEL_ID, {
+        // HuggingFace migrated model weights to their Xet CDN, which serves the
+        // shard URLs via a cross-origin 302 redirect. WebLLM's default cache
+        // backend stores downloads with Chrome's `Cache.add()`, and that API
+        // rejects cross-origin redirects with `net::ERR_FAILED` ("Cache.add()
+        // encountered a network error"). The IndexedDB backend downloads with a
+        // plain `fetch()` that follows the redirect, so it sidesteps the bug.
+        appConfig: { ...prebuiltAppConfig, cacheBackend: "indexeddb" },
         initProgressCallback: (r) =>
           onProgress?.({ progress: r.progress, text: r.text }),
       });
     })().catch((err) => {
-      // Reset so a later retry can attempt loading again.
+      console.error("[WebLLM] engine load failed:", err);
       enginePromise = null;
       throw err;
     });
