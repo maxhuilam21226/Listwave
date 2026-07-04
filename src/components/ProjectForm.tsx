@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { saveProject, deleteProject } from "@/app/actions";
+import { saveProject } from "@/app/actions";
 import AIAssist from "@/components/AIAssist";
 import type { PricingType, Project, ProjectInput } from "@/lib/types";
 
@@ -272,19 +272,6 @@ export default function ProjectForm({ project }: { project?: Project }) {
         >
           Cancel
         </button>
-        {project && (
-          <button
-            type="button"
-            onClick={async () => {
-              if (confirm("Delete this project and all its progress?")) {
-                await deleteProject(project.id);
-              }
-            }}
-            className="ml-auto text-sm text-red-600 dark:text-red-400"
-          >
-            Delete
-          </button>
-        )}
       </div>
     </form>
   );

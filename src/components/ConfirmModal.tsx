@@ -7,16 +7,20 @@ interface Props {
   title: string;
   body: string;
   confirmLabel?: string;
+  cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  secondaryAction?: { label: string; onClick: () => void };
 }
 
 export default function ConfirmModal({
   title,
   body,
   confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
   onConfirm,
   onCancel,
+  secondaryAction,
 }: Props) {
   const [mounted, setMounted] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -88,8 +92,16 @@ export default function ConfirmModal({
             onClick={onCancel}
             className="rounded-lg border border-border px-4 py-2 text-sm text-muted transition hover:border-faint hover:text-fg"
           >
-            Cancel
+            {cancelLabel}
           </button>
+          {secondaryAction && (
+            <button
+              onClick={secondaryAction.onClick}
+              className="rounded-lg border border-border px-4 py-2 text-sm text-red-600 transition hover:bg-track dark:text-red-400"
+            >
+              {secondaryAction.label}
+            </button>
+          )}
           <button
             onClick={onConfirm}
             className="btn-primary rounded-lg px-4 py-2 text-sm font-medium"

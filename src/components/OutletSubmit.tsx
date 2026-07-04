@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveOutletFieldOverrides, setSubmissionStatus } from "@/app/actions";
 import AIAssist from "@/components/AIAssist";
+import ConfirmModal from "@/components/ConfirmModal";
 import type {
   OutletEnriched,
   PreparedField,
@@ -19,6 +20,11 @@ function isAssistable(f: PreparedField): boolean {
     return false;
   if (f.key === "name" || f.key === "contact_email" || f.key === "pricing") return false;
   return true;
+}
+
+/** Product name is read-only — edit it in the project settings. */
+function isReadOnly(f: PreparedField): boolean {
+  return f.source === "name" || f.key === "name";
 }
 
 export default function OutletSubmit({
@@ -39,6 +45,9 @@ export default function OutletSubmit({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Overrides>(initialOverrides);
   const overridesRef = useRef<Overrides>(initialOverrides);
+  const savedOverridesRef = useRef<Overrides>({ ...initialOverrides });
+  const [isDirty, setIsDirty] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const copyFields = fields.filter((f) => f.type !== "image");
@@ -49,10 +58,60 @@ export default function OutletSubmit({
   const valueOf = (f: PreparedField): string =>
     f.key in overrides ? overrides[f.key] : f.value;
 
+  // Warn on browser refresh / tab close while dirty.
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  // Intercept in-app link clicks while dirty.
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: MouseEvent) => {
+      const anchor = (e.target as Element).closest("a");
+      if (!anchor) return;
+      let href: string;
+      try {
+        const url = new URL((anchor as HTMLAnchorElement).href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        if (url.pathname === window.location.pathname) return;
+        href = url.pathname + url.search + url.hash;
+      } catch {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingHref(href);
+    };
+    document.addEventListener("click", handler, true);
+    return () => document.removeEventListener("click", handler, true);
+  }, [isDirty]);
+
   function persist() {
+    savedOverridesRef.current = { ...overridesRef.current };
+    setIsDirty(false);
     startTransition(() =>
       saveOutletFieldOverrides(outlet.id, overridesRef.current, projectId),
     );
+  }
+
+  async function persistAndNavigate(href: string) {
+    setPendingHref(null);
+    setIsDirty(false);
+    savedOverridesRef.current = { ...overridesRef.current };
+    await saveOutletFieldOverrides(outlet.id, overridesRef.current, projectId);
+    router.push(href);
+  }
+
+  function discardAndNavigate(href: string) {
+    const saved = savedOverridesRef.current;
+    setOverrides({ ...saved });
+    overridesRef.current = { ...saved };
+    setIsDirty(false);
+    setPendingHref(null);
+    router.push(href);
   }
 
   /** Edit (or reset) one field's override; `null` reverts to the kit default. */
@@ -65,19 +124,13 @@ export default function OutletSubmit({
       return next;
     });
     if (save) persist();
+    else setIsDirty(true);
   }
 
   async function copy(text: string, key: string) {
     await navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1200);
-  }
-
-  function copyAll() {
-    const text = copyFields
-      .map((f) => `${f.label}:\n${valueOf(f)}`)
-      .join("\n\n");
-    copy(text, "__all");
   }
 
   function mark(next: SubmissionStatus) {
@@ -90,26 +143,43 @@ export default function OutletSubmit({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
-        <a
-          href={submitUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg"
-        >
-          {guided ? "Open submit page ↗" : "Open site ↗"}
-        </a>
-        <button
-          onClick={copyAll}
-          className="rounded-lg border border-border px-4 py-2 text-sm"
-        >
-          {copiedKey === "__all" ? "Copied all ✓" : "Copy all fields"}
-        </button>
-        <span className="ml-auto text-sm">
-          {status === "submitted" && "✅ Submitted"}
-          {status === "skipped" && "⏭️ Skipped"}
-          {status === "todo" && "⬜ Not submitted"}
-        </span>
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2">
+          <a
+            href={submitUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg"
+          >
+            {guided ? "Open submit page ↗" : "Open site ↗"}
+          </a>
+          {isDirty && (
+            <button
+              onClick={persist}
+              className="rounded-lg border border-border px-4 py-2 text-sm"
+            >
+              Save changes
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => mark(status === "submitted" ? "todo" : "submitted")}
+            className={`rounded-lg px-4 py-2 text-sm font-medium ${
+              status === "submitted"
+                ? "border border-border"
+                : "bg-green-600 text-white"
+            }`}
+          >
+            {status === "submitted" ? "Undo submitted" : "Mark as submitted"}
+          </button>
+          <button
+            onClick={() => mark(status === "skipped" ? "todo" : "skipped")}
+            className="rounded-lg border border-border px-4 py-2 text-sm"
+          >
+            {status === "skipped" ? "Unskip" : "Skip"}
+          </button>
+        </div>
       </div>
 
       {!guided && (
@@ -144,18 +214,24 @@ export default function OutletSubmit({
                 <span className="text-sm font-medium">
                   {f.label}
                   {f.required && <span className="text-red-500"> *</span>}
-                  <span
-                    className={`ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                      overridden
-                        ? "bg-accent/15 text-accent"
-                        : "bg-track text-muted"
-                    }`}
-                  >
-                    {overridden ? "Edited" : "Default"}
-                  </span>
+                  {isReadOnly(f) ? (
+                    <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium bg-track text-muted">
+                      Read-only
+                    </span>
+                  ) : (
+                    <span
+                      className={`ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                        overridden
+                          ? "bg-accent/15 text-accent"
+                          : "bg-track text-muted"
+                      }`}
+                    >
+                      {overridden ? "Edited" : "Default"}
+                    </span>
+                  )}
                 </span>
                 <div className="flex items-center gap-2 text-xs">
-                  {f.max != null && (
+                  {!isReadOnly(f) && f.max != null && (
                     <span
                       className={
                         over
@@ -177,7 +253,7 @@ export default function OutletSubmit({
                       onResult={(next) => setOverride(f.key, next, true)}
                     />
                   )}
-                  {overridden && (
+                  {!isReadOnly(f) && overridden && (
                     <button
                       onClick={() => setOverride(f.key, null, true)}
                       className="rounded border border-border px-2 py-0.5 hover:bg-track"
@@ -194,19 +270,21 @@ export default function OutletSubmit({
                 </div>
               </div>
               {f.help && <p className="mt-0.5 text-xs text-faint">{f.help}</p>}
-              {f.type === "textarea" ? (
+              {isReadOnly(f) ? (
+                <p className="mt-2 w-full rounded-lg border border-border bg-track px-3 py-2 font-sans text-sm text-muted">
+                  {value}
+                </p>
+              ) : f.type === "textarea" ? (
                 <textarea
                   rows={4}
                   value={value}
                   onChange={(e) => setOverride(f.key, e.target.value, false)}
-                  onBlur={persist}
                   className="mt-2 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-fg outline-none focus:border-fg"
                 />
               ) : (
                 <input
                   value={value}
                   onChange={(e) => setOverride(f.key, e.target.value, false)}
-                  onBlur={persist}
                   className="mt-2 w-full rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-fg outline-none focus:border-fg"
                 />
               )}
@@ -245,24 +323,20 @@ export default function OutletSubmit({
         </div>
       )}
 
-      <div className="flex gap-3 border-t border-border pt-4">
-        <button
-          onClick={() => mark(status === "submitted" ? "todo" : "submitted")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium ${
-            status === "submitted"
-              ? "border border-border"
-              : "bg-green-600 text-white"
-          }`}
-        >
-          {status === "submitted" ? "Undo submitted" : "Mark as submitted"}
-        </button>
-        <button
-          onClick={() => mark(status === "skipped" ? "todo" : "skipped")}
-          className="rounded-lg border border-border px-4 py-2 text-sm"
-        >
-          {status === "skipped" ? "Unskip" : "Skip this directory"}
-        </button>
-      </div>
+      {pendingHref && (
+        <ConfirmModal
+          title="Unsaved changes"
+          body="You have unsaved changes. Save them before leaving or discard?"
+          confirmLabel="Save & leave"
+          cancelLabel="Stay"
+          secondaryAction={{
+            label: "Discard changes",
+            onClick: () => discardAndNavigate(pendingHref),
+          }}
+          onConfirm={() => persistAndNavigate(pendingHref)}
+          onCancel={() => setPendingHref(null)}
+        />
+      )}
     </div>
   );
 }
