@@ -3,6 +3,7 @@ import { getMasterOutlets, getOutletCountsByProject, getProjects } from "@/lib/d
 import { createClient } from "@/lib/supabase/server";
 import DeleteProjectButton from "@/components/DeleteProjectButton";
 import LandingPage from "@/components/LandingPage";
+import TallyModal from "@/components/TallyModal";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -50,6 +51,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="flex flex-shrink-0 items-center gap-2">
+            <TallyModal />
             <Link
               href="/projects/new"
               className="btn-primary rounded-xl px-4 py-2 text-sm font-semibold"

@@ -4,8 +4,13 @@ import MasterOutlets from "@/components/MasterOutlets";
 import { getMasterOutlets, getUserId } from "@/lib/data";
 
 export default async function MasterOutletsPage() {
-  if (!(await getUserId())) redirect("/login");
+  const userId = await getUserId();
+  if (!userId) redirect("/login");
   const outlets = await getMasterOutlets();
+
+  const isAdmin =
+    !!process.env.OUTLET_SEED_USER_ID &&
+    userId === process.env.OUTLET_SEED_USER_ID;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -20,7 +25,7 @@ export default async function MasterOutletsPage() {
       </p>
 
       <div className="mt-8">
-        <MasterOutlets outlets={outlets} />
+        <MasterOutlets outlets={outlets} isAdmin={isAdmin} />
       </div>
     </main>
   );

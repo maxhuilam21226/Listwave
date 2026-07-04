@@ -11,7 +11,13 @@ import SortableList from "@/components/SortableList";
  * The user's master outlet template. Edits here only affect outlets new
  * projects inherit — existing projects keep their own independent copies.
  */
-export default function MasterOutlets({ outlets }: { outlets: Outlet[] }) {
+export default function MasterOutlets({
+  outlets,
+  isAdmin = false,
+}: {
+  outlets: Outlet[];
+  isAdmin?: boolean;
+}) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [costFilter, setCostFilter] = useState<"all" | OutletCost>("all");
@@ -68,6 +74,19 @@ export default function MasterOutlets({ outlets }: { outlets: Outlet[] }) {
 
   return (
     <div>
+      {isAdmin && (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-brand/30 bg-accent/10 px-4 py-3 text-sm">
+          <span className="mt-0.5 text-base leading-none">🌱</span>
+          <div>
+            <span className="font-semibold text-brand">Default seed</span>
+            <span className="ml-1.5 text-muted">
+              — new users inherit a snapshot of this list on sign-up. Keep it
+              curated here; existing users are not affected by changes.
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
         <input
           value={search}

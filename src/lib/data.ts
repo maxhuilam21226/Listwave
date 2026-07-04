@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { OUTLET_SEED } from "@/lib/outlets/seed";
 import type { Outlet, Project, Submission } from "@/lib/types";
 
@@ -87,12 +88,50 @@ export async function getMasterOutlets(): Promise<Outlet[]> {
 
   if ((data?.length ?? 0) > 0) return sortOutlets(data!);
 
-  // Empty: seed the starter master list for the current user, then return it.
+  // Empty account: seed the master list for this new user.
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
 
+  // Prefer the admin's live curated list over the bundled seed file.
+  const seedUserId = process.env.OUTLET_SEED_USER_ID;
+  if (seedUserId && seedUserId !== user.id) {
+    try {
+      const adminClient = createAdminClient();
+      const { data: adminOutlets } = await adminClient
+        .from("outlets")
+        .select("name, url, description, cost")
+        .eq("user_id", seedUserId)
+        .is("project_id", null)
+        .order("sort_order", { ascending: true });
+
+      if (adminOutlets && adminOutlets.length > 0) {
+        const { data: seeded, error: seedErr } = await supabase
+          .from("outlets")
+          .insert(
+            adminOutlets.map((o, i) => ({
+              name: o.name,
+              url: o.url,
+              description: o.description,
+              cost: o.cost ?? "free",
+              user_id: user.id,
+              project_id: null,
+              sort_order: i,
+            })),
+          )
+          .select("*");
+        if (seedErr) throw seedErr;
+        return sortOutlets(seeded ?? []);
+      }
+    } catch (err) {
+      // If the admin client fails (e.g. key not set yet), fall through to the
+      // bundled seed so a missing env var never breaks sign-up.
+      console.error("[seed] Admin outlet fetch failed, falling back:", err);
+    }
+  }
+
+  // Fallback: static bundled seed from seed.ts.
   const { data: seeded, error: seedErr } = await supabase
     .from("outlets")
     .insert(
