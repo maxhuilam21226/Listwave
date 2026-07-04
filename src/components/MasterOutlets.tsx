@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { addOutlet, deleteOutlet, reorderOutlets, updateOutlet } from "@/app/actions";
+import { addOutlet, deleteOutlet, reorderOutlets, syncWithAdminMasterList, updateOutlet } from "@/app/actions";
 import type { Outlet, OutletCost, OutletInput } from "@/lib/types";
+import ConfirmModal from "@/components/ConfirmModal";
 import OutletForm from "@/components/OutletForm";
 import SortableList from "@/components/SortableList";
 
@@ -23,6 +24,8 @@ export default function MasterOutlets({
   const [costFilter, setCostFilter] = useState<"all" | OutletCost>("all");
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   const visible = useMemo(() => {
@@ -65,6 +68,24 @@ export default function MasterOutlets({
     });
   }
 
+  function syncWithAdmin() {
+    setSyncConfirmOpen(true);
+  }
+
+  function doSync() {
+    setSyncConfirmOpen(false);
+    setSyncing(true);
+    startTransition(async () => {
+      const result = await syncWithAdminMasterList();
+      setSyncing(false);
+      if (result?.error) {
+        alert(`Sync failed: ${result.error}`);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   function reorder(orderedIds: string[]) {
     startTransition(async () => {
       await reorderOutlets(orderedIds);
@@ -84,6 +105,25 @@ export default function MasterOutlets({
               curated here; existing users are not affected by changes.
             </span>
           </div>
+        </div>
+      )}
+
+      {!isAdmin && (
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 text-base leading-none">🔄</span>
+            <span className="text-muted">
+              Reset this list to the latest curated admin template. Your
+              existing projects won&apos;t be affected.
+            </span>
+          </div>
+          <button
+            onClick={syncWithAdmin}
+            disabled={syncing}
+            className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted hover:border-faint disabled:opacity-50"
+          >
+            {syncing ? "Syncing…" : "Sync with admin list"}
+          </button>
         </div>
       )}
 
@@ -161,6 +201,16 @@ export default function MasterOutlets({
           )
         }
       />
+
+      {syncConfirmOpen && (
+        <ConfirmModal
+          title="Replace master list?"
+          body="Your master outlet list will be overwritten with the admin's current list. Existing projects are unaffected."
+          confirmLabel="Replace & sync"
+          onConfirm={doSync}
+          onCancel={() => setSyncConfirmOpen(false)}
+        />
+      )}
     </div>
   );
 }

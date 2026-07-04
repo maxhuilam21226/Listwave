@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getMasterOutlets } from "@/lib/data";
 import type { OutletInput, ProjectInput, SubmissionStatus } from "@/lib/types";
@@ -215,4 +216,55 @@ export async function deleteProject(id: string) {
   if (error) throw error;
   revalidatePath("/");
   redirect("/");
+}
+
+/**
+ * Replaces the current user's master outlet list with the admin's curated list.
+ * Existing project outlet copies are never touched.
+ */
+export async function syncWithAdminMasterList(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const seedUserId = process.env.OUTLET_SEED_USER_ID;
+  if (!seedUserId || seedUserId === user.id)
+    return { error: "Sync unavailable" };
+
+  const adminClient = createAdminClient();
+  const { data: adminOutlets, error: fetchErr } = await adminClient
+    .from("outlets")
+    .select("name, url, description, cost")
+    .eq("user_id", seedUserId)
+    .is("project_id", null)
+    .order("sort_order", { ascending: true });
+
+  if (fetchErr) throw fetchErr;
+  if (!adminOutlets || adminOutlets.length === 0)
+    return { error: "Admin list is empty" };
+
+  const { error: deleteErr } = await supabase
+    .from("outlets")
+    .delete()
+    .eq("user_id", user.id)
+    .is("project_id", null);
+  if (deleteErr) throw deleteErr;
+
+  const { error: insertErr } = await supabase.from("outlets").insert(
+    adminOutlets.map((o: { name: string; url: string; description: string; cost: string | null }, i: number) => ({
+      name: o.name,
+      url: o.url,
+      description: o.description,
+      cost: o.cost ?? "free",
+      user_id: user.id,
+      project_id: null,
+      sort_order: i,
+    })),
+  );
+  if (insertErr) throw insertErr;
+
+  revalidatePath("/outlets");
+  return {};
 }
