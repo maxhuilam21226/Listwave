@@ -21,6 +21,28 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Listwave",
   description: "Prep once, launch everywhere. A personal launch cockpit.",
+  metadataBase: new URL("https://listwave.vercel.app"),
+  openGraph: {
+    title: "Listwave",
+    description: "Prep once, launch everywhere. A personal launch cockpit.",
+    url: "https://listwave.vercel.app",
+    siteName: "Listwave",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Listwave – Prep once, launch everywhere",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Listwave",
+    description: "Prep once, launch everywhere. A personal launch cockpit.",
+    images: ["/og-image.png"],
+  },
   verification: {
     google: "mqRiC5Duyi7m_eg74541GMg03sEXIND6_O8N6iL4CdM",
   },
