@@ -102,6 +102,7 @@ create table if not exists public.submissions (
   outlet_id    uuid not null references public.outlets (id) on delete cascade,
   status       text not null default 'todo' check (status in ('todo','submitted','skipped')),
   submitted_at timestamptz,
+  scheduled_at timestamptz,
   notes        text,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now(),

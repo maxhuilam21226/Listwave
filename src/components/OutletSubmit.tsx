@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { saveOutletFieldOverrides, setSubmissionStatus } from "@/app/actions";
+import { saveOutletFieldOverrides, setSubmissionStatus, setSubmissionScheduledAt } from "@/app/actions";
 import AIAssist from "@/components/AIAssist";
 import ConfirmModal from "@/components/ConfirmModal";
 import type {
@@ -33,15 +33,23 @@ export default function OutletSubmit({
   fields,
   initialOverrides,
   initialStatus,
+  initialNotes,
+  initialScheduledAt,
 }: {
   projectId: string;
   outlet: OutletEnriched;
   fields: PreparedField[];
   initialOverrides: Overrides;
   initialStatus: SubmissionStatus;
+  initialNotes: string | null;
+  initialScheduledAt: string | null;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState<SubmissionStatus>(initialStatus);
+  const [skipReason, setSkipReason] = useState<string>(initialNotes ?? "");
+  const [scheduledAt, setScheduledAt] = useState<string>(
+    initialScheduledAt ? initialScheduledAt.slice(0, 10) : "",
+  );
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Overrides>(initialOverrides);
   const overridesRef = useRef<Overrides>(initialOverrides);
@@ -135,51 +143,103 @@ export default function OutletSubmit({
 
   function mark(next: SubmissionStatus) {
     setStatus(next);
+    if (next !== "skipped") setSkipReason("");
     startTransition(() => {
-      setSubmissionStatus(projectId, outlet.id, next);
+      setSubmissionStatus(projectId, outlet.id, next, next === "skipped" ? skipReason || undefined : undefined);
       router.refresh();
+    });
+  }
+
+  function saveSkipReason() {
+    startTransition(() => {
+      setSubmissionStatus(projectId, outlet.id, "skipped", skipReason || undefined);
+    });
+  }
+
+  function saveScheduledAt(value: string) {
+    setScheduledAt(value);
+    startTransition(() => {
+      setSubmissionScheduledAt(projectId, outlet.id, value ? new Date(value).toISOString() : null);
     });
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center gap-2">
-          <a
-            href={submitUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg"
-          >
-            {guided ? "Open submit page ↗" : "Open site ↗"}
-          </a>
-          {isDirty && (
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <a
+              href={submitUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg"
+            >
+              {guided ? "Open submit page ↗" : "Open site ↗"}
+            </a>
+            {isDirty && (
+              <button
+                onClick={persist}
+                className="rounded-lg border border-border px-4 py-2 text-sm"
+              >
+                Save changes
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             <button
-              onClick={persist}
+              onClick={() => mark(status === "submitted" ? "todo" : "submitted")}
+              className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                status === "submitted"
+                  ? "border border-border"
+                  : "bg-green-600 text-white"
+              }`}
+            >
+              {status === "submitted" ? "Undo submitted" : "Mark as submitted"}
+            </button>
+            <button
+              onClick={() => mark(status === "skipped" ? "todo" : "skipped")}
               className="rounded-lg border border-border px-4 py-2 text-sm"
             >
-              Save changes
+              {status === "skipped" ? "Unskip" : "Skip"}
             </button>
-          )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => mark(status === "submitted" ? "todo" : "submitted")}
-            className={`rounded-lg px-4 py-2 text-sm font-medium ${
-              status === "submitted"
-                ? "border border-border"
-                : "bg-green-600 text-white"
-            }`}
-          >
-            {status === "submitted" ? "Undo submitted" : "Mark as submitted"}
-          </button>
-          <button
-            onClick={() => mark(status === "skipped" ? "todo" : "skipped")}
-            className="rounded-lg border border-border px-4 py-2 text-sm"
-          >
-            {status === "skipped" ? "Unskip" : "Skip"}
-          </button>
-        </div>
+
+        {status === "skipped" && (
+          <div>
+            <label className="block text-xs text-muted mb-1">
+              Reason for skipping <span className="text-faint">(optional)</span>
+            </label>
+            <textarea
+              rows={2}
+              placeholder="e.g. Requires paid plan, not relevant for this project…"
+              value={skipReason}
+              onChange={(e) => setSkipReason(e.target.value)}
+              onBlur={saveSkipReason}
+              className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 font-sans text-sm text-fg outline-none focus:border-fg"
+            />
+          </div>
+        )}
+
+        {status === "submitted" && (
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted whitespace-nowrap">📅 Scheduled launch:</label>
+            <input
+              type="date"
+              value={scheduledAt}
+              onChange={(e) => saveScheduledAt(e.target.value)}
+              className="rounded-lg border border-border bg-surface px-2 py-1 text-sm text-fg outline-none focus:border-fg"
+            />
+            {scheduledAt && (
+              <button
+                onClick={() => saveScheduledAt("")}
+                className="text-xs text-muted hover:text-fg"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {!guided && (

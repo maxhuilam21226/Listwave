@@ -141,6 +141,7 @@ export interface Submission {
   outlet_id: string;
   status: SubmissionStatus;
   submitted_at: string | null;
+  scheduled_at: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

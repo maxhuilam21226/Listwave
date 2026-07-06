@@ -61,6 +61,7 @@ export async function setSubmissionStatus(
   projectId: string,
   outletId: string,
   status: SubmissionStatus,
+  skipReason?: string,
 ) {
   const supabase = await createClient();
   const { error } = await supabase.from("submissions").upsert(
@@ -69,6 +70,28 @@ export async function setSubmissionStatus(
       outlet_id: outletId,
       status,
       submitted_at: status === "submitted" ? new Date().toISOString() : null,
+      notes: status === "skipped" ? (skipReason ?? null) : null,
+    },
+    { onConflict: "project_id,outlet_id" },
+  );
+  if (error) throw error;
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/projects/${projectId}/outlets/${outletId}`);
+}
+
+/** Save the scheduled launch date for one project × outlet (upsert). */
+export async function setSubmissionScheduledAt(
+  projectId: string,
+  outletId: string,
+  scheduledAt: string | null,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("submissions").upsert(
+    {
+      project_id: projectId,
+      outlet_id: outletId,
+      scheduled_at: scheduledAt,
     },
     { onConflict: "project_id,outlet_id" },
   );

@@ -21,7 +21,10 @@ export default async function OutletSubmitPage({
 
   const fields = prepareFields(outlet.fields ?? GENERIC_FIELDS, project);
   const submissions = await getSubmissions(id);
-  const initialStatus = submissions[outletId]?.status ?? "todo";
+  const sub = submissions[outletId];
+  const initialStatus = sub?.status ?? "todo";
+  const initialNotes = sub?.notes ?? null;
+  const initialScheduledAt = sub?.scheduled_at ?? null;
 
   let host = outlet.url;
   try {
@@ -55,6 +58,8 @@ export default async function OutletSubmitPage({
           fields={fields}
           initialOverrides={rawOutlet.field_overrides ?? {}}
           initialStatus={initialStatus}
+          initialNotes={initialNotes}
+          initialScheduledAt={initialScheduledAt}
         />
       </div>
     </main>
