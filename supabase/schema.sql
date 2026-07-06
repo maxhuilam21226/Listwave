@@ -27,6 +27,8 @@ create table if not exists public.projects (
   tags          text[] not null default '{}',
   pricing_type  text not null default 'freemium',
   contact_email text not null default '',
+  video_url     text,
+  twitter_handle text,
   logo_url      text,
   screenshot_urls text[] not null default '{}',
   created_at    timestamptz not null default now(),

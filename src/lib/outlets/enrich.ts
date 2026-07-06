@@ -40,6 +40,7 @@ export function enrichOutlets(outlets: Outlet[]): OutletEnriched[] {
     hand-curated field schema. */
 export const GENERIC_FIELDS: OutletField[] = [
   { key: "name", label: "Product name", type: "text", source: "name", required: true },
+  { key: "website_url", label: "Website URL", type: "url", source: "url", required: true },
   { key: "one_liner", label: "One-liner (≤60)", type: "text", max: 60, source: "one_liner" },
   { key: "tagline", label: "Tagline (≤100)", type: "text", max: 100, source: "tagline" },
   {
@@ -54,6 +55,8 @@ export const GENERIC_FIELDS: OutletField[] = [
   { key: "tags", label: "Category tags", type: "tags", source: "tags" },
   { key: "pricing", label: "Pricing", type: "text", source: "pricing_type" },
   { key: "contact_email", label: "Contact email", type: "email", source: "contact_email" },
+  { key: "twitter_handle", label: "X / Twitter handle", type: "text", source: "twitter_handle", help: "e.g. @yourhandle" },
+  { key: "video_url", label: "Demo video URL", type: "url", source: "video_url", help: "YouTube, Loom, etc." },
   { key: "logo", label: "Logo", type: "image", source: "logo_url" },
   { key: "screenshots", label: "Screenshots", type: "image", source: "screenshot_urls" },
 ];

@@ -28,6 +28,8 @@ function emptyInput(): ProjectInput {
     tags: [],
     pricing_type: "freemium",
     contact_email: "",
+    video_url: null,
+    twitter_handle: null,
     logo_url: null,
     screenshot_urls: [],
   };
@@ -211,6 +213,25 @@ export default function ProjectForm({ project }: { project?: Project }) {
         />
       </Field>
 
+      <Field label="X / Twitter handle" help="e.g. @yourhandle">
+        <input
+          value={form.twitter_handle ?? ""}
+          onChange={(e) => set("twitter_handle", e.target.value || null)}
+          placeholder="@yourhandle"
+          className={inputCls}
+        />
+      </Field>
+
+      <Field label="Demo video URL" help="YouTube, Loom, etc.">
+        <input
+          type="url"
+          value={form.video_url ?? ""}
+          onChange={(e) => set("video_url", e.target.value || null)}
+          placeholder="https://"
+          className={inputCls}
+        />
+      </Field>
+
       <Field label="Logo">
         <div className="flex items-center gap-3">
           {form.logo_url && (
@@ -363,6 +384,8 @@ function toInput(p: Project): ProjectInput {
     tags: p.tags,
     pricing_type: p.pricing_type,
     contact_email: p.contact_email,
+    video_url: p.video_url,
+    twitter_handle: p.twitter_handle,
     logo_url: p.logo_url,
     screenshot_urls: p.screenshot_urls,
   };

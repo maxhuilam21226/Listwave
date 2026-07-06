@@ -11,6 +11,8 @@ export type KitFieldKey =
   | "tags"
   | "pricing_type"
   | "contact_email"
+  | "video_url"
+  | "twitter_handle"
   | "logo_url"
   | "screenshot_urls";
 
@@ -27,6 +29,8 @@ export interface Project {
   tags: string[];
   pricing_type: PricingType;
   contact_email: string;
+  video_url: string | null;
+  twitter_handle: string | null;
   logo_url: string | null;
   screenshot_urls: string[];
   created_at: string;

@@ -18,7 +18,7 @@ function isAssistable(f: PreparedField): boolean {
   if (f.type !== "text" && f.type !== "textarea" && f.type !== "tags") return false;
   if (f.source === "name" || f.source === "contact_email" || f.source === "pricing_type")
     return false;
-  if (f.key === "name" || f.key === "contact_email" || f.key === "pricing") return false;
+  if (f.key === "name" || f.key === "contact_email" || f.key === "pricing" || f.key === "twitter_handle") return false;
   return true;
 }
 
