@@ -112,12 +112,17 @@ export default async function RootLayout({
                   </button>
                 </form>
               ) : (
-                <Link
-                  href="/login"
-                  className="btn-primary rounded-lg px-3 py-1.5 text-sm font-semibold"
-                >
-                  Sign in
-                </Link>
+                <>
+                  <span className="rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-brand">
+                    Free to use
+                  </span>
+                  <Link
+                    href="/login"
+                    className="btn-primary rounded-lg px-3 py-1.5 text-sm font-semibold"
+                  >
+                    Sign in
+                  </Link>
+                </>
               )}
             </div>
           </div>

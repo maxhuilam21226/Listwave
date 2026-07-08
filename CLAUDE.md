@@ -71,31 +71,35 @@ Next.js 16 (App Router, `src/`, Turbopack) · TypeScript · Tailwind v4 · Supab
 ## Status & next steps
 See memory `launchkit-build-state` for full detail. **✅ LIVE IN PRODUCTION at
 https://listwave.vercel.app** (hosted on **Vercel** — auto-deploys on push to
-`main`, PRs get preview URLs). `main` is at `f36bc85` (WebLLM Xet-CDN cache
-fix); **uncommitted this session: logo, favicon/icons/manifest, Aurora animation
-enhancements, animated brand-ink** — commit & push when ready.
+`main`, PRs get preview URLs). `main` is at `6c21adf` (OG + Twitter Card meta
+tags + og-image.png). Clean working tree.
 
-**Logo & icons (2026-07-04, uncommitted):** `public/logo.png` (1024×1024 teal
+**Kit fields expanded (2026-07-05, `c196aa6`):** Website URL, Demo video URL
+(`video_url`), and X/Twitter handle (`twitter_handle`) now appear on every
+outlet's prepare/copy view. Both new fields are inputs in `ProjectForm`. DB
+migration applied to live Supabase (`ALTER TABLE public.projects ADD COLUMN IF
+NOT EXISTS video_url text; ADD COLUMN IF NOT EXISTS twitter_handle text;`).
+
+**Logo & icons (2026-07-04, `6f6cfce`):** `public/logo.png` (1024×1024 teal
 wave icon). Next to "Listwave" in nav (`layout.tsx`), login, landing. Favicon
 replaced: `src/app/favicon.ico` (RGBA ICO 16/32/48px), `src/app/icon.png`
 (512px), `src/app/apple-icon.png` (180px for iOS home screen). `src/app/manifest.ts`
 → `/manifest.webmanifest` for Android home screen (purple theme_color, standalone).
 `public/icon-192.png` + `public/icon-512.png` for manifest.
 
-**Aurora animation (2026-07-04, uncommitted):** `@property` registered blob
+**Aurora animation (2026-07-04, `6f6cfce`):** `@property` registered blob
 positions so each of the 3 aurora blobs drifts independently. `body::after`
 parallax glow layer (z-index: −2). `aurora-pulse` adds opacity + saturation +
 hue-rotate shimmer. Opacity bumped in light & dark for better visibility.
 `[data-theme="aurora"] .brand-ink` now runs `lw-grad-shift 4s` — same shifting
 color animation as "Launch everywhere" hero text — on all brand text.
 
-**WebLLM AI reword fix (2026-07-04):** in-browser ✨ reword broke with
+**WebLLM AI reword fix (2026-07-04, `f36bc85`):** in-browser ✨ reword broke with
 "Cache.add() encountered a network error" — HuggingFace moved model weights to
 their Xet CDN, which serves shards via a cross-origin 302 redirect that Chrome's
 `Cache.add()` rejects. Fixed in `src/lib/ai/webllm.ts` via `appConfig: {
 ...prebuiltAppConfig, cacheBackend: "indexeddb" }` (IndexedDB backend downloads
-with plain `fetch()`, which follows the redirect). Not yet verified in prod —
-test ✨ AI after the deploy. See memory `webllm-xet-cdn-cache-fix`.
+with plain `fetch()`, which follows the redirect). See memory `webllm-xet-cdn-cache-fix`.
 
 Shipped & verified (tsc + lint + `next build` pass; auth paths tested in prod):
 - **Paid/free outlet cost** (`outlets.cost`), **delete-project** trash button on

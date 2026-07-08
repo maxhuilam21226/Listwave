@@ -113,6 +113,9 @@ export default function LoginPage() {
           ? "Sign in to manage your launches."
           : "Create your account."}
       </p>
+      <p className="mt-2 text-xs font-semibold text-brand">
+        ✓ Free to use · No credit card required
+      </p>
 
       {urlError && (
         <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">

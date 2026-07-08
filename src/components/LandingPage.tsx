@@ -133,7 +133,10 @@ export default function LandingPage() {
               </Link>
               <a href="#how" className="lw-ghost">How it works ↓</a>
             </div>
-            <p className="lw-fine">Free · No credit card · Your data stays yours</p>
+            <div className="lw-trust">
+              <span><span className="lw-trust-check">✓</span>Free to use</span>
+              <span><span className="lw-trust-check">✓</span>No credit card</span>
+            </div>
           </div>
           <div className="lw-hero-demo">
             <CockpitDemo />
@@ -235,7 +238,10 @@ export default function LandingPage() {
           <Link href="/login" className="btn-primary lw-cta-big">
             Start free — no card needed →
           </Link>
-          <p className="lw-fine" style={{ marginTop: '1rem' }}>Free to use · No credit card required</p>
+          <div className="lw-trust" style={{ marginTop: '1rem', justifyContent: 'center' }}>
+            <span><span className="lw-trust-check">✓</span>Free to use</span>
+            <span><span className="lw-trust-check">✓</span>No credit card</span>
+          </div>
         </div>
       </section>
 

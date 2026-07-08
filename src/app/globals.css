@@ -619,6 +619,15 @@ textarea::placeholder {
 }
 .lw-ghost:hover { color: var(--color-fg); }
 .lw-fine { font-size: 0.77rem; color: var(--color-faint); }
+.lw-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.1rem;
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+.lw-trust-check { color: var(--color-brand); font-weight: 700; margin-right: 0.2rem; }
 
 /* ── MOCKUP ── */
 .lw-mockup {
